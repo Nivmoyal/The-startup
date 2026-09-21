@@ -38,7 +38,8 @@
   --hud-h:64px;
 }
 *{box-sizing:border-box}
-html,body{height:100%}
+html,body{height:100%;overflow:hidden}
+:root{color-scheme:dark}
 body{
   margin:0;background:var(--bg);color:var(--txt);
   font-family:'Outfit',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
@@ -1881,6 +1882,27 @@ function modal({ icon, title, sub, body, foot, size }) {
   return root.querySelector('.mbody');
 }
 
+/* An in-game replacement for window.confirm, which embedded frames suppress.
+   Answering "no" returns you to whichever screen asked. */
+function confirmModal(opts) {
+  const back = opts.back === false ? null : ui.screen;
+  modal({
+    icon: opts.icon || '⚠️', title: opts.title, sub: opts.sub || '', size: 'sm',
+    body: '<div style="font-size:13.5px;line-height:1.65;color:var(--muted)">' + opts.body + '</div>',
+    foot: '<button class="btn ghost" data-c="no">' + (opts.no || 'Keep it') + '</button>' +
+          '<div style="flex:1"></div>' +
+          '<button class="btn ' + (opts.danger ? 'red' : 'primary') + '" data-c="yes">' + (opts.yes || 'Confirm') + '</button>',
+  });
+  root.querySelector('.mfoot').onclick = e => {
+    const b = e.target.closest('[data-c]');
+    if (!b) return;
+    sfx('click');
+    closeModal();
+    if (b.dataset.c === 'yes') opts.onYes();
+    else if (back) openScreen(back);
+  };
+}
+
 /* ==========================================================================
    10. SCREEN: PRODUCT BUILDER
    ========================================================================== */
@@ -2755,9 +2777,17 @@ function openProjectStatus() {
     const a = b.dataset.act;
     if (a === 'close') { closeModal(); }
     else if (a === 'cancel') {
-      if (!confirm('Cancel "' + p.name + '"? The ' + money(p.cost) + ' you invested is gone.')) return;
-      S.project = null; toast('bad', '🗑️ Project cancelled', 'Sunk cost written off.');
-      closeModal(); queueSave(); render();
+      confirmModal({
+        icon: '🗑️', title: 'Cancel this project?', danger: true,
+        body: 'Scrapping <b style="color:var(--txt)">' + esc(p.name) + '</b> writes off the <b style="color:var(--red)">' +
+              money(p.cost) + '</b> already spent on it. Nothing comes back.',
+        no: 'Keep building', yes: 'Scrap it',
+        onYes: () => {
+          S.project = null;
+          toast('bad', '🗑️ Project cancelled', 'Sunk cost written off.');
+          queueSave(); render();
+        },
+      });
     } else if (a === 'crunch') {
       const cost = crunchCost();
       if (S.cash < cost) return toast('bad', '💸 Cannot fund crunch', 'You need ' + money(cost));
@@ -3011,7 +3041,13 @@ function openSettings() {
       try { navigator.clipboard.writeText(JSON.stringify(S)); toast('good', '📋 Copied', 'Save JSON is on your clipboard.'); }
       catch (err) { toast('bad', 'Clipboard blocked', 'Your browser refused the copy.'); }
     } else if (b.dataset.act === 'reset') {
-      if (confirm('Delete your save and start a brand new company?')) hardReset();
+      confirmModal({
+        icon: '🗑️', title: 'Delete your save?', danger: true,
+        body: '<b style="color:var(--txt)">' + esc(S.company) + '</b> and everything it has shipped will be gone for good, ' +
+              'and you will start again from the garage.',
+        no: 'Never mind', yes: 'Delete everything',
+        onYes: hardReset,
+      });
     }
   };
 }
