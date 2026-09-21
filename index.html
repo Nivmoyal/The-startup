@@ -417,6 +417,33 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 .slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--navy);
   border:3px solid #fff;cursor:grab}
 
+/* ---------------- story events ---------------- */
+.ev-tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:2px 8px;border-radius:99px;background:var(--navy);color:#fff;
+  font-family:'Barlow Condensed','Barlow',sans-serif}
+.ev-body{font-size:15px;line-height:1.65;color:var(--ink);
+  padding:4px 0 16px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.ev-body b{font-weight:700}
+.ev-choices{display:flex;flex-direction:column;gap:9px}
+.ev-choice{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px 16px;
+  border-radius:11px;border:1px solid var(--line2);background:var(--cream2);transition:.14s
+}
+.ev-choice:hover:not(:disabled){background:#fff;border-color:var(--navy);transform:translateX(3px)}
+.ev-choice:disabled{opacity:.45;cursor:not-allowed}
+.ev-ch-main{flex:1;min-width:0}
+.ev-ch-main b{display:block;font-size:15px;font-weight:600;line-height:1.3}
+.ev-hint{display:block;font-size:12.5px;color:var(--ink2);margin-top:3px}
+.ev-cost{font-size:15px;font-weight:700;color:var(--gold2);white-space:nowrap;flex:none}
+.ev-cost.no{color:var(--bad)}
+.hold{display:flex;gap:12px;align-items:flex-start;padding:13px;border-radius:11px;
+  background:var(--cream2);border:1px solid var(--line)}
+.hold .hi2{width:44px;height:44px;flex:none;border-radius:10px;display:grid;place-items:center;
+  font-size:21px;background:var(--paper2)}
+.story-row{display:flex;gap:12px;padding:11px 13px;border-radius:10px;background:var(--cream2);
+  border:1px solid var(--line);border-left:3px solid var(--navy)}
+.story-row .sd{font-size:12px;color:var(--ink2);white-space:nowrap;flex:none;min-width:84px}
+
 /* ---------------- responsive ---------------- */
 @media (max-width:1100px){
   .bld-grid{grid-template-columns:1fr;gap:14px;padding:0 44px;max-width:620px}
@@ -728,8 +755,12 @@ function officeLadder() {
     .concat(UPGRADES);
 }
 function office() { return officeLadder()[S.officeLevel]; }
-function deskCapacity() { return office().desks; }
-function rentCost() { return office().rent; }
+function deskCapacity() { return office().desks + (S.bonusDesks || 0); }
+function rentCost() {
+  let r = office().rent * (S.rentLock && S.day < S.rentLock ? 1 : (S.rentBump || 1));
+  if (S.sublet) r -= office().rent * .25;
+  return Math.max(0, Math.round(r));
+}
 
 const TIERS = [
   [0, 'Garage Startup'], [150000, 'Seed Stage'], [900000, 'Series A'], [4000000, 'Scale-up'],
@@ -809,6 +840,8 @@ function freshState() {
     company: 'Nova Labs', startId: null, cash: 60000, fans: 0, day: 0, speed: 1,
     officeLevel: 0, employees: [], candidates: [], project: null, products: [],
     hype: 0, campaigns: [], rp: 0, loan: null, nudgedLoan: false,
+    holdings: [], seen: [], pending: [], story: [], nextEventDay: 90, lastFired: {},
+    investorCut: 0, bonusDesks: 0, rentBump: 1, rushNext: false,
     depts: { gear: 0, network: 0, rnd: 0, mkt: 0, sales: 0, hr: 0 },
     rivals: RIVAL_SEED.map(r => ({ ...r, id: uid(), owned: false })),
     reviews: [], share: .4, revenueLog: [],
@@ -830,6 +863,11 @@ function mods() {
   m.sales  += dlv('sales') * .08;
   m.salary += -dlv('hr') * .06;
   m.candidate += dlv('hr') * .10;
+  const hm = holdingMods();
+  for (const k in hm) m[k] = (m[k] || 0) + hm[k];
+  if (S.contractDeal) m.sales += .05;
+  if (S.charter) m.sales += .03;
+  if (S.unionised) m.output += .06;
   return m;
 }
 function techLevel() {
@@ -864,6 +902,7 @@ function load() {
     if (!p || typeof p !== 'object' || typeof p.cash !== 'number' || !p.startId) return null;
     const st = Object.assign(freshState(), p);
     st.depts = Object.assign(freshState().depts, p.depts || {});
+    ['holdings', 'seen', 'pending', 'story'].forEach(k => { if (!Array.isArray(st[k])) st[k] = []; });
     return st;
   } catch (e) { return null; }
 }
@@ -901,7 +940,10 @@ function traitMult(e, fx) { let m = 1; for (const t of e.traits) { const T = tra
 function empOutput(e) { return e.skill * clamp(.45 + e.energy / 145, .45, 1.08) * traitMult(e, 'work'); }
 function teamBonus() { let b = 1; for (const e of S.employees) b += (traitMult(e, 'team') - 1); return clamp(b, .7, 1.6); }
 function payroll() { return S.employees.reduce((a, e) => a + e.salary, 0); }
-function monthlyBurn() { return payroll() + rentCost() + (S.loan ? S.loan.monthly : 0); }
+function monthlyBurn() {
+  const hb = holdingBooks();
+  return payroll() + rentCost() + (S.loan ? S.loan.monthly : 0) + hb.up - hb.inc;
+}
 function runwayMonths() {
   const income = S.revenueLog.slice(-30).reduce((a, b) => a + b, 0);
   const net = monthlyBurn() - income;
@@ -1000,9 +1042,10 @@ function startProject(catId, name, specs, price) {
     id: uid(), cat: catId, name, specs: { ...specs }, price,
     cost: t.cost, unit: t.unit, totalDays: t.days, daysDone: 0,
     specDesign: t.design, specTech: t.tech, teamDesign: 0, teamTech: 0, bugs: 0,
-    workDone: 0, workNeeded: t.days * dailyWork(),
+    workDone: 0, workNeeded: t.days * dailyWork() * (S.rushNext ? .8 : 1),
     idealCrew: Math.max(1, (t.design + t.tech) / 26), startDay: S.day,
   };
+  if (S.rushNext) { S.rushNext = false; toast('info', 'Head start', 'The team had already sketched this one.'); }
   toast('money', '"' + name + '" in development', money(t.cost) + ' invested · about ' + t.days + ' days');
   sfx('start'); queueSave();
   return true;
@@ -1095,7 +1138,7 @@ function dailySales() {
     const decay = Math.exp(-age / (58 + prod.rating * 11));
     let units = market * appeal * priceF * hypeF * ramp * decay * rnd(.85, 1.15);
     if (!isFinite(units) || units < 0) units = 0;
-    const rev = units * (prod.price - prod.unit) * (1 + m.sales);
+    const rev = units * (prod.price - prod.unit) * (1 + m.sales) * (1 - (S.investorCut || 0));
     prod.units += units;
     prod.revenue += Math.max(0, units * prod.price);
     prod.profit += rev;
@@ -1117,6 +1160,9 @@ function monthlyBooks() {
   let sub = 0;
   for (const r of S.rivals) if (r.owned) sub += Math.round(r.value * .022);
   if (sub) earn(sub);
+  const hb = holdingBooks();
+  if (hb.up) spend(hb.up);
+  if (hb.inc) earn(hb.inc);
   if (S.loan) {
     const due = Math.min(S.loan.monthly, S.loan.remaining);
     spend(due);
@@ -1125,6 +1171,7 @@ function monthlyBooks() {
   }
   toast('info', dateLabel() + ' books',
     'Payroll ' + money(pay) + ' · rent ' + money(rent) + (sub ? ' · subsidiaries +' + money(sub) : '') +
+    (hb.up ? ' · holdings ' + money(hb.up - hb.inc) : '') +
     (S.loan ? ' · loan ' + money(S.loan.monthly) : ''));
   if (S.cash < 0) {
     toast('bad', 'You are in the red', 'Cut costs or ship something fast.');
@@ -1232,6 +1279,7 @@ function tickDay() {
     toast('info', 'Running low on cash', 'Departments → Financing can lend you enough to ship the next product.');
   }
   if (gameDate().getDate() === 1 && S.day > 0) monthlyBooks();
+  maybeEvent();
   if (S.day % 7 === 0) queueSave();
 }
 function modalOpen() { return $('#modalRoot').classList.contains('on'); }
@@ -2351,8 +2399,9 @@ function drawPreview(canvas, cat, specs) {
 /* ==========================================================================
    15. DEPARTMENTS — where the budget goes
    ========================================================================== */
-function openInvest() {
+function openInvest(tab) {
   ui.screen = 'invest';
+  ui.investTab = tab || ui.investTab || 'depts';
   const ladder = officeLadder();
   const next = ladder[S.officeLevel + 1];
   const cur = office();
@@ -2367,9 +2416,14 @@ function openInvest() {
       const good = k === 'salary' ? v < 0 : v > 0;
       return '<span class="tag ' + (good ? 'ok' : 'bad') + '">' + lab + ' ' + fmt(v) + '</span>';
     }).join('') || '<span style="font-size:13px;color:var(--ink2)">Nothing bought yet.</span>';
+  const tabsHTML = '<div class="tabs" id="invTabs">' +
+    [['depts', 'Departments'], ['hold', 'Holdings (' + S.holdings.length + ')'], ['story', 'Story (' + S.story.length + ')']]
+      .map(([k, l]) => '<button class="tab' + (ui.investTab === k ? ' on' : '') + '" data-it="' + k + '">' + l + '</button>').join('') +
+    '</div>';
+  if (ui.investTab !== 'depts') { openInvestTab(tabsHTML); return; }
   sheet({
-    icon: '🏗️', title: 'Departments', sub: 'Every level you buy shows up in the office.',
-    body:
+    icon: '🏗️', title: 'Company', sub: 'Every level you buy shows up in the office.',
+    body: tabsHTML +
       '<div class="card" style="margin-bottom:16px">' +
         '<div style="display:flex;gap:13px;align-items:center;flex-wrap:wrap">' +
           '<div class="prod-ico" style="font-size:24px">' + (cur.icon || '🏢') + '</div>' +
@@ -2430,6 +2484,7 @@ function openInvest() {
       '<div style="font-size:12.5px;color:var(--ink2);margin-top:14px">Total invested so far: <b>' +
         moneyFull(S.stats.invested) + '</b> · research points <b>' + spaced(S.rp) + ' 🎓</b> (tech level ' + techLevel() + '/6)</div>',
   });
+  wireInvestTabs();
   const up = $('#upBtn');
   if (up) up.onclick = () => { upgradeOffice(); openInvest(); renderHUD(); };
   const grid = $('#deptGrid');
@@ -2446,6 +2501,55 @@ function openInvest() {
     takeLoan(+b.dataset.loan);
     openInvest(); renderHUD();
   };
+}
+
+function wireInvestTabs() {
+  const t = $('#invTabs');
+  if (!t) return;
+  t.onclick = e => {
+    const b = e.target.closest('[data-it]');
+    if (!b) return;
+    sfx('click');
+    openInvest(b.dataset.it);
+  };
+}
+function openInvestTab(tabsHTML) {
+  const hb = holdingBooks();
+  const body = ui.investTab === 'hold'
+    ? (S.holdings.length
+        ? '<div class="kv" style="margin-bottom:14px"><span>Monthly upkeep</span>' +
+            '<b style="color:var(--bad)">' + moneyFull(hb.up) + '</b></div>' +
+          (hb.inc ? '<div class="kv" style="margin-top:-8px;margin-bottom:14px"><span>Monthly income</span>' +
+            '<b style="color:var(--ok)">' + moneyFull(hb.inc) + '</b></div>' : '') +
+          '<div style="display:flex;flex-direction:column;gap:10px">' +
+          S.holdings.map(id => {
+            const h = HOLDINGS[id];
+            if (!h) return '';
+            const fx = Object.entries(h.mods).map(([k, v]) =>
+              '<span class="tag ' + (v > 0 ? 'ok' : 'bad') + '">' + k + ' ' + (v > 0 ? '+' : '−') +
+              Math.round(Math.abs(v) * 100) + '%</span>').join(' ');
+            return '<div class="hold"><div class="hi2">' + h.icon + '</div><div style="flex:1;min-width:0">' +
+              '<b style="font-size:15px">' + esc(h.name) + '</b> <span class="tag">' + esc(h.kind) + '</span>' +
+              '<div style="font-size:12.5px;color:var(--ink2);margin:4px 0 7px">' + esc(h.desc) + '</div>' +
+              '<div style="display:flex;gap:6px;flex-wrap:wrap">' + fx +
+                '<span class="tag gold">upkeep ' + money(h.upkeep) + '/mo</span>' +
+                (h.income ? '<span class="tag ok">income ' + money(h.income) + '/mo</span>' : '') +
+              '</div></div></div>';
+          }).join('') + '</div>'
+        : '<div class="empty"><span class="big">🏛️</span>You own nothing but the company itself.<br>' +
+          'Situations will offer you things to buy as the money grows.</div>')
+    : (S.story.length
+        ? '<div style="display:flex;flex-direction:column;gap:8px">' + S.story.map(e =>
+            '<div class="story-row"><span class="sd">' + e.date + '</span>' +
+            '<div style="flex:1;min-width:0"><b style="font-size:13.5px">' + esc(e.title) + '</b>' +
+            '<div style="font-size:12.5px;color:var(--ink2);margin-top:2px">You chose: ' + esc(e.choice) + '</div></div></div>'
+          ).join('') + '</div>'
+        : '<div class="empty"><span class="big">📖</span>Nothing has happened yet.<br>' +
+          'Situations arrive every few months — what you decide gets recorded here.</div>');
+  sheet({ icon: ui.investTab === 'hold' ? '🏛️' : '📖', title: 'Company',
+    sub: ui.investTab === 'hold' ? 'What the company owns beyond its products.' : 'The decisions you have made.',
+    body: tabsHTML + body });
+  wireInvestTabs();
 }
 
 /* ==========================================================================
@@ -2819,13 +2923,608 @@ function hardReset() {
 }
 
 /* ==========================================================================
+   17b. STORY — situations you decide, and what you end up owning
+   ========================================================================== */
+/* Effects a choice can have. Each choice's run() mutates S and returns the
+   sentence shown on the outcome card. */
+const HOLDINGS = {
+  tide:    { id: 'tide',    name: 'Harbor City Tide',    icon: '🏀', kind: 'Basketball franchise',
+             desc: 'A title contender. The cameras never leave.',
+             mods: { hype: .35, candidate: .1 }, upkeep: 900000, income: 620000 },
+  pioneers:{ id: 'pioneers',name: 'Grandview Pioneers',  icon: '🏀', kind: 'Basketball franchise',
+             desc: 'Mid-table, well run, quietly profitable.',
+             mods: { hype: .15, sales: .04 }, upkeep: 380000, income: 340000 },
+  otters:  { id: 'otters',  name: 'Fenwick Bay Otters',  icon: '🏀', kind: 'Basketball franchise',
+             desc: 'Last place for nine years. The city adores them anyway.',
+             mods: { hype: .08, candidate: .06 }, upkeep: 140000, income: 60000 },
+  jet:     { id: 'jet',     name: 'Corporate Jet',       icon: '✈️', kind: 'Vanity asset',
+             desc: 'Two hours to anywhere. Terrible optics, excellent calendar.',
+             mods: { sales: .06, hype: -.05 }, upkeep: 210000, income: 0 },
+  foundation:{ id: 'foundation', name: 'The Foundation', icon: '🕊️', kind: 'Charity',
+             desc: 'Scholarships, clinics, and a lot of goodwill.',
+             mods: { hype: .18, candidate: .22 }, upkeep: 400000, income: 0 },
+  factory: { id: 'factory', name: 'Own Factory',         icon: '🏭', kind: 'Manufacturing',
+             desc: 'You build the hardware yourself now.',
+             mods: { sales: .12 }, upkeep: 260000, income: 0 },
+  space:   { id: 'space',   name: 'Orbital Program',     icon: '🛰️', kind: 'Moonshot',
+             desc: 'A launch pad, a rocket, and an enormous bill.',
+             mods: { hype: .5, candidate: .2 }, upkeep: 1800000, income: 0 },
+  campus:  { id: 'campus',  name: 'Campus Perks',        icon: '🥗', kind: 'Facilities',
+             desc: 'Gym, canteen, and a nap room nobody admits to using.',
+             mods: { candidate: .15, output: .05 }, upkeep: 90000, income: 0 },
+  lab:     { id: 'lab',     name: 'University Lab',      icon: '🎓', kind: 'Endowment',
+             desc: 'Your name on a building, and first pick of its graduates.',
+             mods: { candidate: .3 }, upkeep: 160000, income: 0 },
+};
+function own(id) { return S.holdings.includes(id); }
+function addHolding(id) { if (!own(id)) S.holdings.push(id); }
+function holdingMods() {
+  const m = {};
+  for (const id of S.holdings) {
+    const h = HOLDINGS[id];
+    if (!h) continue;
+    for (const k in h.mods) m[k] = (m[k] || 0) + h.mods[k];
+  }
+  return m;
+}
+function holdingBooks() {
+  let up = 0, inc = 0;
+  for (const id of S.holdings) {
+    const h = HOLDINGS[id];
+    if (!h) continue;
+    up += h.upkeep; inc += h.income;
+  }
+  return { up, inc };
+}
+function queueEvent(id, days) { S.pending.push({ id, day: S.day + days }); }
+function logStory(title, choice) {
+  S.story.unshift({ day: S.day, date: dotDate(), title, choice });
+  S.story = S.story.slice(0, 40);
+}
+const pctOfCash = f => Math.round(S.cash * f / 1000) * 1000;
+
+const EVENTS = [
+  /* ---------------- early ---------------- */
+  {
+    id: 'poach', icon: '🎯', once: false, tag: 'People',
+    when: () => S.employees.length >= 2 && S.day > 60,
+    title: 'A rival is poaching your best engineer',
+    body: () => {
+      const e = S.employees.slice().sort((a, b) => b.skill - a.skill)[0];
+      return '<b>' + esc(e.name) + '</b> has an offer on the table for well above what you pay. ' +
+        'They came to tell you first, which is either loyalty or leverage.';
+    },
+    choices: [
+      { label: 'Match the offer', hint: 'Their salary goes up 30%',
+        run() { const e = S.employees.slice().sort((a, b) => b.skill - a.skill)[0];
+          if (!e) return 'They had already left.';
+          e.salary = Math.round(e.salary * 1.3 / 50) * 50;
+          e.energy = clamp(e.energy + 20, 0, 100);
+          return esc(e.name) + ' stays, at ' + moneyFull(e.salary) + '/month. The rest of the team notices.'; } },
+      { label: 'Offer equity instead', hint: 'No cash now, but morale across the team',
+        run() { S.employees.forEach(e => e.energy = clamp(e.energy + 12, 0, 100));
+          S.hype = clamp(S.hype + .05, 0, 4);
+          return 'Everyone gets a slice. Nobody leaves this month, and the office feels different.'; } },
+      { label: 'Let them go', hint: 'You lose them, and the salary',
+        run() { const e = S.employees.slice().sort((a, b) => b.skill - a.skill)[0];
+          if (!e) return 'They had already left.';
+          S.employees = S.employees.filter(x => x.id !== e.id);
+          S.employees.forEach((x, k) => x.desk = k);
+          buildOfficeLayout();
+          return esc(e.name) + ' is gone. Payroll is lighter and so is the team.'; } },
+    ],
+  },
+  {
+    id: 'blogger', icon: '📰', once: true, tag: 'Press',
+    when: () => S.products.length >= 1,
+    title: 'A blogger wants the exclusive',
+    body: 'A well-read reviewer will cover your next release first — if you hand over a unit early and answer honestly about what is not finished.',
+    choices: [
+      { label: 'Give them the exclusive', hint: '+hype, +fans',
+        run() { S.hype = clamp(S.hype + .3, 0, 4); S.fans += 1800;
+          return 'The piece runs. It is fair, mostly flattering, and everyone links to it.'; } },
+      { label: 'Only with approval over the text', hint: 'They may walk',
+        run() { if (Math.random() < .6) { S.hype = clamp(S.hype - .1, 0, 4);
+            return 'They publish anyway — about you, not your product. It stings.'; }
+          S.hype = clamp(S.hype + .15, 0, 4); S.fans += 600;
+          return 'They agree, grudgingly. The coverage is safe and a little flat.'; } },
+      { label: 'Decline politely', hint: 'Nothing gained, nothing lost',
+        run() { return 'You keep your powder dry for launch day.'; } },
+    ],
+  },
+  {
+    id: 'landlord', icon: '🏢', once: true, tag: 'Money',
+    when: () => S.officeLevel === 0 && S.day > 200 && S.startId !== 'remote',
+    title: 'Your landlord wants more',
+    body: () => 'The lease is up and the rent is going to ' + moneyFull(Math.round(rentCost() * 1.4)) +
+      ' a month unless you do something about it.',
+    choices: [
+      { label: 'Sign a long lease', hint: 'Locks the old rate for two years', cost: () => rentCost() * 4,
+        run() { S.rentLock = S.day + 730;
+          return 'Signed. The rate holds, and so does your address.'; } },
+      { label: 'Negotiate hard', hint: 'Might work, might annoy them',
+        run() { if (Math.random() < .55) return 'They blink. Rent stays where it was.';
+          S.rentBump = 1.25;
+          return 'They do not blink. Rent is up 25% from next month.'; } },
+      { label: 'Threaten to move out', hint: 'Bluffing has a price',
+        run() { if (Math.random() < .35) { S.rentBump = .85;
+            return 'They call your bluff, then fold. Rent actually drops.'; }
+          S.rentBump = 1.4;
+          return 'They shrug and start showing the space to someone else. Rent is up 40%.'; } },
+    ],
+  },
+  {
+    id: 'opensource', icon: '🔓', once: true, tag: 'Strategy',
+    when: () => S.products.length >= 2 && dlv('rnd') >= 1,
+    title: 'Open-source the engine?',
+    body: 'Your engineers want to release the internal tooling publicly. It would cost you a real advantage, and buy you a reputation money cannot.',
+    choices: [
+      { label: 'Release it', hint: '+applicants, +research, rivals catch up',
+        run() { addHolding('lab'); S.rp += 300; S.fans += 4000;
+          S.rivals.forEach(r => { if (!r.owned) r.strength = clamp(r.strength + .3, 3, 9.9); });
+          return 'It is on every front page for a week. Engineers start applying unprompted — and so do your competitors’ engineers, to read the code.'; } },
+      { label: 'Keep it proprietary', hint: 'Tech advantage stays yours',
+        run() { S.rp += 120;
+          return 'It stays behind the firewall. The team is quietly disappointed.'; } },
+    ],
+  },
+  {
+    id: 'angel', icon: '👼', once: true, tag: 'Money',
+    when: () => S.cash < 120000 && S.products.length >= 1 && S.day > 120,
+    title: 'An angel investor is interested',
+    body: 'She will wire you cash today. In exchange she wants a slice of everything you sell from here on.',
+    choices: [
+      { label: 'Take $250 000', hint: 'Costs you 6% of all future revenue',
+        run() { S.cash += 250000; S.investorCut = (S.investorCut || 0) + .06;
+          return 'The money lands the same afternoon. Six percent of everything, forever.'; } },
+      { label: 'Take $80 000', hint: 'Costs you 2% of all future revenue',
+        run() { S.cash += 80000; S.investorCut = (S.investorCut || 0) + .02;
+          return 'A smaller cheque and a smaller bite. She says to call when you need more.'; } },
+      { label: 'Stay independent', hint: 'No cash, no strings',
+        run() { S.hype = clamp(S.hype + .08, 0, 4);
+          return 'You turn it down. The team hears about it and stands a little taller.'; } },
+    ],
+  },
+  {
+    id: 'troll', icon: '⚖️', once: true, tag: 'Legal',
+    when: () => S.products.length >= 2 && netWorth() > 400000,
+    title: 'A patent troll has found you',
+    body: 'A company that makes nothing claims your product infringes a patent on "a method of displaying information on a screen".',
+    choices: [
+      { label: 'Settle quietly', hint: 'Pay and move on', cost: () => Math.max(40000, pctOfCash(.08)),
+        run() { return 'Paid. Their lawyers thank you for your business and go looking for the next startup.'; } },
+      { label: 'Fight it in court', hint: 'Expensive, slow, but it may end well',
+        run() { const fee = Math.max(25000, pctOfCash(.05));
+          spend(fee);
+          if (Math.random() < .6) { S.hype = clamp(S.hype + .25, 0, 4); S.fans += 3000;
+            return 'Two years later you win, and the write-ups make you look like the good guy. Legal fees: ' + moneyFull(fee) + '.'; }
+          spend(Math.max(60000, pctOfCash(.12)));
+          return 'You lose, and pay both the damages and ' + moneyFull(fee) + ' in fees. Expensive lesson.'; } },
+      { label: 'Ignore the letter', hint: 'It might escalate',
+        run() { queueEvent('troll_escalate', irnd(120, 240));
+          return 'You file it in the bin. That is unlikely to be the end of it.'; } },
+    ],
+  },
+  {
+    id: 'troll_escalate', icon: '⚖️', followup: true, icon2: true, tag: 'Legal',
+    when: () => true,
+    title: 'The patent troll actually sued',
+    body: 'The letter you binned turned into a filing. Your lawyer says the cheap window has closed.',
+    choices: [
+      { label: 'Settle now, at a premium', cost: () => Math.max(120000, pctOfCash(.18)),
+        hint: 'Much worse than the original offer',
+        run() { return 'Settled, at roughly three times what they first asked for.'; } },
+      { label: 'Go all the way to trial', hint: 'A real gamble',
+        run() { if (Math.random() < .5) { S.hype = clamp(S.hype + .4, 0, 4); S.fans += 9000;
+            return 'You win, publicly, and the ruling gets cited for years. Worth it.'; }
+          spend(Math.max(200000, pctOfCash(.3)));
+          return 'You lose badly. The damages hurt, and the press is worse.'; } },
+    ],
+  },
+  /* ---------------- mid ---------------- */
+  {
+    id: 'breach', icon: '🔐', once: true, tag: 'Crisis',
+    when: () => S.products.length >= 2 && S.fans > 20000,
+    title: 'You have been breached',
+    body: 'An intruder took a user database. Nobody outside the company knows yet. Your head of engineering is waiting for an answer.',
+    choices: [
+      { label: 'Disclose it today', hint: 'Short, sharp pain — and it ends there',
+        run() { S.hype = clamp(S.hype - .35, 0, 4); S.fans = Math.round(S.fans * .88);
+          return 'A rough week of headlines. Security researchers publicly note that you handled it properly.'; } },
+      { label: 'Fix it quietly and say nothing', hint: 'It may never come out. It may.',
+        run() { queueEvent('breach_out', irnd(150, 320));
+          return 'Patched at 3am. No announcement. Everyone agrees never to mention it again.'; } },
+      { label: 'Disclose and pay for a full audit', hint: 'Costs money, buys trust', cost: () => Math.max(80000, pctOfCash(.1)),
+        run() { S.hype = clamp(S.hype - .1, 0, 4); S.fans += 2000; addHolding('lab');
+          return 'You publish the whole timeline and the audit. It costs money and wins you an unusual amount of goodwill.'; } },
+    ],
+  },
+  {
+    id: 'breach_out', icon: '💣', followup: true, tag: 'Crisis',
+    when: () => true,
+    title: 'The breach you buried just leaked',
+    body: 'A journalist has the internal thread where you decided not to tell anyone. They are running it tomorrow either way.',
+    choices: [
+      { label: 'Get ahead of it with a full apology', hint: 'Limits the damage',
+        run() { S.hype = clamp(S.hype - .5, 0, 4); S.fans = Math.round(S.fans * .78);
+          return 'You publish first. It is still brutal, but it is over in about ten days.'; } },
+      { label: 'Deny everything', hint: 'High risk',
+        run() { S.hype = clamp(S.hype - .9, 0, 4); S.fans = Math.round(S.fans * .55);
+          S.rivals.forEach(r => { if (!r.owned) r.value = Math.round(r.value * 1.04); });
+          return 'The thread is published in full the next morning. This one follows you around for years.'; } },
+    ],
+  },
+  {
+    id: 'clone', icon: '👯', once: true, tag: 'Strategy',
+    when: () => S.products.some(p => p.rating >= 7) && S.share > 3,
+    title: 'Somebody cloned your product',
+    body: () => { const r = S.rivals.find(x => !x.owned) || { name: 'A rival' };
+      return '<b>' + esc(r.name) + '</b> has shipped something that is, politely, extremely familiar. It is cheaper than yours.'; },
+    choices: [
+      { label: 'Sue them', hint: 'Costly, uncertain', cost: () => Math.max(60000, pctOfCash(.09)),
+        run() { if (Math.random() < .45) { const r = S.rivals.find(x => !x.owned);
+            if (r) r.value = Math.round(r.value * .82);
+            return 'The injunction lands. Their clone is pulled and their valuation takes the hit.'; }
+          return 'It drags on and quietly settles. Your lawyers did well out of it.'; } },
+      { label: 'Out-ship them', hint: 'Skip the courts, cut your next dev time',
+        run() { S.rushNext = true; S.employees.forEach(e => e.energy = clamp(e.energy - 12, 0, 100));
+          return 'No lawsuit. The next project gets a 20% head start instead — the team is already sketching it.'; } },
+      { label: 'Ignore it entirely', hint: 'Let the market decide',
+        run() { S.hype = clamp(S.hype + .05, 0, 4);
+          return 'You say nothing. Reviewers make the comparison for you, and it mostly goes your way.'; } },
+    ],
+  },
+  {
+    id: 'star', icon: '⭐', once: true, tag: 'People',
+    when: () => S.cash > 900000 && S.employees.length >= 4,
+    title: 'A famous designer is available',
+    body: 'She has shipped three products you have on your own desk. She is expensive, she is difficult, and she is very good.',
+    choices: [
+      { label: 'Hire her', hint: 'A 9.6 designer at a painful salary',
+        cost: () => 90000,
+        run() { if (S.employees.length >= deskCapacity()) return 'There is nowhere to seat her. She takes another offer.';
+          const c = makeCandidate(0);
+          c.role = 'design'; c.skill = 9.6; c.name = 'Margot Aldridge'; c.exp = 17; c.age = 44;
+          c.traits = ['Perfectionist', 'Expensive']; c.salary = 34000;
+          hireCandidate(c); buildOfficeLayout();
+          return 'Margot starts on Monday. Payroll will never look the same.'; } },
+      { label: 'Hire her as a consultant', hint: 'One-off boost to the current project', cost: () => 45000,
+        run() { if (S.project) { S.project.teamDesign += 14 * Math.max(1, S.project.daysDone);
+            return 'Three weeks of reviews later, the design is noticeably better.'; }
+          S.rp += 150;
+          return 'With nothing in development she runs a workshop instead. The team learns a lot.'; } },
+      { label: 'Pass', hint: 'Keep the payroll sane',
+        run() { return 'You let it go. She joins a competitor within the month.'; } },
+    ],
+  },
+  {
+    id: 'union', icon: '✊', once: true, tag: 'People',
+    when: () => S.employees.length >= 8,
+    title: 'The team wants to organise',
+    body: 'A majority have signed cards. They want a say in hours, and in what happens the next time you decide to crunch.',
+    choices: [
+      { label: 'Recognise them', hint: 'Salaries up, but morale and retention up more',
+        run() { S.employees.forEach(e => { e.salary = Math.round(e.salary * 1.12 / 50) * 50; e.energy = 100; });
+          S.unionised = true; S.hype = clamp(S.hype + .12, 0, 4);
+          return 'You sign the recognition agreement. Payroll is up 12% and nobody has quit since.'; } },
+      { label: 'Resist it', hint: 'Cheaper, and it will cost you elsewhere',
+        run() { S.employees.forEach(e => e.energy = clamp(e.energy - 30, 0, 100));
+          S.hype = clamp(S.hype - .25, 0, 4);
+          return 'The drive fails by two votes. The mood in the office does not recover quickly.'; } },
+    ],
+  },
+  {
+    id: 'factory', icon: '🏭', once: true, tag: 'Strategy',
+    when: () => S.cash > 4000000 && S.products.some(p => CATEGORIES[p.cat].priceHint > 1.5),
+    title: 'Build your own factory?',
+    body: 'You are paying a contract manufacturer a great deal of money. You could buy the line outright and keep the margin.',
+    choices: [
+      { label: 'Build it', hint: '+12% revenue, and a real upkeep bill', cost: () => 3200000,
+        run() { addHolding('factory');
+          return 'The line comes online nine months later. Every unit you ship is worth more now.'; } },
+      { label: 'Renegotiate the contract instead', hint: 'Cheaper, smaller gain', cost: () => 250000,
+        run() { S.contractDeal = true;
+          return 'A harder contract, signed. Not as good as owning it, but it cost a fraction.'; } },
+      { label: 'Stay asset-light', hint: 'Keep the cash',
+        run() { return 'You stay out of manufacturing. Your accountant is relieved.'; } },
+    ],
+  },
+  {
+    id: 'campus', icon: '🥗', once: true, tag: 'People',
+    when: () => S.cash > 1500000 && S.employees.length >= 10,
+    title: 'What should the new floor be?',
+    body: 'You have taken more space than you need. The team has opinions about what goes in it.',
+    choices: [
+      { label: 'Gym, canteen and a nap room', hint: '+applicants, +output', cost: () => 700000,
+        run() { addHolding('campus'); S.employees.forEach(e => e.energy = 100);
+          return 'It is genuinely nice. People stay later without being asked to, which you try not to think about too hard.'; } },
+      { label: 'More desks', hint: 'Room for four more people now',
+        cost: () => 300000,
+        run() { S.bonusDesks = (S.bonusDesks || 0) + 4; buildOfficeLayout();
+          return 'Four more desks go in. Functional, and a bit grim.'; } },
+      { label: 'Sublet it', hint: 'Turn the space into income',
+        run() { S.sublet = true;
+          return 'A design studio takes it for a decent monthly cheque.'; } },
+    ],
+  },
+  /* ---------------- late: what you do with real money ---------------- */
+  {
+    id: 'sports', icon: '🏀', once: true, tag: 'Empire',
+    when: () => S.cash > 42000000,
+    title: 'A basketball franchise is for sale',
+    body: 'Three owners are quietly looking for an exit, and your bankers have brought you all three. ' +
+      'Nobody thinks this is a rational use of the money. Everybody wants to know which one you would pick.',
+    choices: [
+      { label: 'Harbor City Tide — $38M', hint: 'A title contender. +35% hype, +10% applicants, heavy upkeep',
+        cost: () => 38000000,
+        run() { addHolding('tide'); S.fans += 90000; queueEvent('sports_season', irnd(200, 330));
+          return 'You own a contender. The press conference is longer than any product launch you have ever done.'; } },
+      { label: 'Grandview Pioneers — $19M', hint: 'Mid-table and profitable. +15% hype, +4% sales',
+        cost: () => 19000000,
+        run() { addHolding('pioneers'); S.fans += 30000; queueEvent('sports_season', irnd(200, 330));
+          return 'A sensible, well-run club. It may even make money, which your CFO finds disorienting.'; } },
+      { label: 'Fenwick Bay Otters — $9M', hint: 'Last place for nine years. Cheap, and beloved',
+        cost: () => 9000000,
+        run() { addHolding('otters'); S.fans += 45000; queueEvent('sports_season', irnd(200, 330));
+          return 'You buy the worst team in the league. The city, inexplicably, loves you for it.'; } },
+      { label: 'Stay out of sports', hint: 'Keep the money in the company',
+        run() { S.rp += 400;
+          return 'You pass. The money goes into the product roadmap instead, which nobody writes articles about.'; } },
+    ],
+  },
+  {
+    id: 'sports_season', icon: '🏆', followup: true, tag: 'Empire',
+    when: () => true,
+    title: () => {
+      const t = S.holdings.find(h => ['tide', 'pioneers', 'otters'].includes(h));
+      return (t ? HOLDINGS[t].name : 'Your team') + ' made the playoffs';
+    },
+    body: 'They are two wins from the final and one injury from collapse. The general manager wants money for a trade, today.',
+    choices: [
+      { label: 'Fund the trade', hint: 'Buy the win', cost: () => Math.max(2000000, pctOfCash(.06)),
+        run() { if (Math.random() < .65) { S.hype = clamp(S.hype + .6, 0, 4); S.fans += 140000;
+            queueEvent('sports_season', irnd(300, 420));
+            return 'They win it. Your logo is on the trophy footage for a month.'; }
+          S.hype = clamp(S.hype + .15, 0, 4); S.fans += 25000;
+          queueEvent('sports_season', irnd(300, 420));
+          return 'They lose in the final. Still the best season the club has had in a decade.'; } },
+      { label: 'Let the roster play it out', hint: 'Free, and honest',
+        run() { if (Math.random() < .3) { S.hype = clamp(S.hype + .45, 0, 4); S.fans += 90000;
+            queueEvent('sports_season', irnd(300, 420));
+            return 'They win anyway. The underdog story writes itself, and you are in every retelling.'; }
+          S.fans += 12000; queueEvent('sports_season', irnd(300, 420));
+          return 'Knocked out in the semi-final. Next year, everyone says.'; } },
+    ],
+  },
+  {
+    id: 'space', icon: '🛰️', once: true, tag: 'Empire',
+    when: () => S.cash > 90000000,
+    title: 'Fund a private space program?',
+    body: 'A team of ex-agency engineers want a backer. It will not make money. It will put your name on a rocket.',
+    choices: [
+      { label: 'Fund it', hint: '+50% hype, +20% applicants, enormous upkeep', cost: () => 60000000,
+        run() { addHolding('space'); S.fans += 400000; queueEvent('space_launch', irnd(240, 400));
+          return 'Ground is broken on a launch pad. Every engineer on earth now wants to work for you.'; } },
+      { label: 'Sponsor an existing launch', hint: 'A fraction of the cost, a fraction of the glory',
+        cost: () => 6000000,
+        run() { S.hype = clamp(S.hype + .35, 0, 4); S.fans += 60000;
+          return 'Your logo flies on somebody else’s rocket. It is on the news for one very good evening.'; } },
+      { label: 'Keep both feet on the ground', hint: 'No',
+        run() { return 'You decline. Somebody else funds them, and you watch the launch on a screen like everyone else.'; } },
+    ],
+  },
+  {
+    id: 'space_launch', icon: '🚀', followup: true, tag: 'Empire',
+    when: () => true,
+    title: 'Launch day',
+    body: 'The window opens in six hours. One sensor is reading slightly out of spec, and the engineers are split on whether it matters.',
+    choices: [
+      { label: 'Launch on schedule', hint: 'The world is watching either way',
+        run() { if (Math.random() < .7) { S.hype = clamp(S.hype + 1.1, 0, 4); S.fans += 600000;
+            return 'It flies. Perfect insertion. For about a week you are the most famous company on the planet.'; }
+          S.hype = clamp(S.hype - .5, 0, 4); S.fans = Math.round(S.fans * .9);
+          queueEvent('space_launch', irnd(200, 300));
+          return 'It clears the tower and breaks up ninety seconds later. Nobody is hurt. The footage is everywhere.'; } },
+      { label: 'Scrub and fix the sensor', hint: 'Costs a month and a lot of money', cost: () => Math.max(3000000, pctOfCash(.04)),
+        run() { queueEvent('space_launch', irnd(60, 120)); S.hype = clamp(S.hype + .1, 0, 4);
+          return 'You scrub. The engineers who wanted to wait remember that you listened.'; } },
+    ],
+  },
+  {
+    id: 'jet', icon: '✈️', once: true, tag: 'Empire',
+    when: () => S.cash > 25000000,
+    title: 'The board suggests a jet',
+    body: 'You are spending a lot of hours in airports. There is a very good argument for it, and a very bad headline in it.',
+    choices: [
+      { label: 'Buy the jet', hint: '+6% sales, −5% hype, real upkeep', cost: () => 18000000,
+        run() { addHolding('jet');
+          return 'It is absurdly convenient. The first photo of it appears online within a fortnight.'; } },
+      { label: 'Charter when needed', hint: 'Most of the benefit, none of the headline',
+        run() { S.charter = true;
+          return 'You charter instead. Less convenient, considerably less embarrassing.'; } },
+      { label: 'Fly commercial like everyone else', hint: '+hype',
+        run() { S.hype = clamp(S.hype + .2, 0, 4); S.fans += 20000;
+          return 'Someone photographs you in a middle seat. It does more for the brand than any campaign this year.'; } },
+    ],
+  },
+  {
+    id: 'foundation', icon: '🕊️', once: true, tag: 'Empire',
+    when: () => S.cash > 60000000,
+    title: 'Start a foundation?',
+    body: 'You have more money than the company can sensibly spend. Your options are to sit on it, or to do something with it.',
+    choices: [
+      { label: 'Endow a foundation', hint: '+18% hype, +22% applicants, ongoing cost', cost: () => 40000000,
+        run() { addHolding('foundation'); S.fans += 150000;
+          return 'Scholarships, clinics, and a small army of people who now speak about you warmly in public.'; } },
+      { label: 'Endow a university lab', hint: '+30% applicant quality', cost: () => 12000000,
+        run() { addHolding('lab');
+          return 'Your name goes on a building, and you get first look at everyone who graduates out of it.'; } },
+      { label: 'Give the staff a bonus instead', hint: 'Full energy and lasting loyalty',
+        cost: () => Math.round(payroll() * 3),
+        run() { S.employees.forEach(e => e.energy = 100);
+          S.hype = clamp(S.hype + .15, 0, 4);
+          return 'Three months of salary, to everyone, with no announcement. It leaks anyway, and it lands well.'; } },
+    ],
+  },
+  {
+    id: 'buyout', icon: '🤝', once: true, tag: 'Money',
+    when: () => netWorth() > 25000000 && S.products.length >= 4,
+    title: 'Somebody wants to buy you',
+    body: () => { const r = S.rivals.filter(x => !x.owned).sort((a, b) => b.value - a.value)[0];
+      return '<b>' + esc(r ? r.name : 'A larger company') + '</b> has made an offer for the whole company. ' +
+        'It is a great deal of money, and the end of doing it your way.'; },
+    choices: [
+      { label: 'Sell a minority stake', hint: 'Cash now, a cut of everything later',
+        run() { const amount = Math.round(netWorth() * .3);
+          S.cash += amount; S.investorCut = (S.investorCut || 0) + .08;
+          return 'You sell 30% for ' + moneyFull(amount) + '. They get a board seat and 8% of revenue.'; } },
+      { label: 'Refuse, publicly', hint: '+hype, +fans, and a target on your back',
+        run() { S.hype = clamp(S.hype + .4, 0, 4); S.fans += 50000;
+          S.rivals.forEach(r => { if (!r.owned) r.strength = clamp(r.strength + .4, 3, 9.9); });
+          return 'Your refusal letter gets published. It is widely admired, and they are now competing with you properly.'; } },
+      { label: 'Use the offer to raise your own valuation', hint: 'Quietly effective',
+        run() { S.share = clamp(S.share + 2, 0, 97); S.rp += 500;
+          return 'You shop the offer around and never sign it. Your valuation goes up regardless.'; } },
+    ],
+  },
+  {
+    id: 'bailout', icon: '🆘', once: true, tag: 'Empire',
+    when: () => S.cash > 8000000 && S.rivals.some(r => !r.owned && r.value < S.cash * .8),
+    title: 'A rival is in trouble',
+    body: () => { const r = S.rivals.filter(x => !x.owned).sort((a, b) => a.value - b.value)[0];
+      return '<b>' + esc(r ? r.name : 'A competitor') + '</b> cannot make payroll this month. ' +
+        'Their board is asking whether you would be interested in a very quick conversation.'; },
+    choices: [
+      { label: 'Buy them at a discount', hint: 'Half the usual acquisition price',
+        cost: () => { const r = S.rivals.filter(x => !x.owned).sort((a, b) => a.value - b.value)[0];
+          return r ? Math.round(r.value * .65) : 0; },
+        run() { const r = S.rivals.filter(x => !x.owned).sort((a, b) => a.value - b.value)[0];
+          if (!r) return 'Somebody else got there first.';
+          r.owned = true; S.stats.acquisitions++;
+          S.share = clamp(S.share + r.share, 0, 97); r.share = 0;
+          return 'You buy ' + esc(r.name) + ' for well under what it is worth. Their staff arrive on Monday.'; } },
+      { label: 'Lend them the money', hint: 'They owe you, and they survive',
+        cost: () => 2000000,
+        run() { S.hype = clamp(S.hype + .18, 0, 4);
+          return 'You keep a competitor alive. The industry notices, and it is not the worst reputation to have.'; } },
+      { label: 'Let them fail', hint: 'Their share goes to whoever is left',
+        run() { const r = S.rivals.filter(x => !x.owned).sort((a, b) => a.value - b.value)[0];
+          if (r) { r.owned = true; r.share = 0; r.value = Math.round(r.value * .2); S.share = clamp(S.share + 1.5, 0, 97); }
+          return 'They wind down over six weeks. You pick up some of their customers and none of their debt.'; } },
+    ],
+  },
+  {
+    id: 'stadium', icon: '🏟️', once: true, tag: 'Empire',
+    when: () => S.cash > 30000000 && S.fans > 200000,
+    title: 'Naming rights are available',
+    body: 'A 60 000-seat stadium needs a name for the next ten years. Yours would fit on the facade nicely.',
+    choices: [
+      { label: 'Put your name on it', hint: 'Big, permanent hype', cost: () => 22000000,
+        run() { S.hype = clamp(S.hype + .55, 0, 4); S.fans += 180000; S.stadium = true;
+          return 'Every match report for the next decade contains your company name. Your marketing lead cries slightly.'; } },
+      { label: 'Sponsor the youth academy instead', hint: 'Cheaper, warmer, slower', cost: () => 3000000,
+        run() { S.hype = clamp(S.hype + .2, 0, 4); S.fans += 40000; addHolding('lab');
+          return 'Less glamorous, and much better liked. Some of those kids will work for you one day.'; } },
+      { label: 'Spend it on the product', hint: 'Research points instead',
+        run() { S.rp += 900;
+          return 'No stadium. The R&D budget has never looked healthier.'; } },
+    ],
+  },
+];
+
+/* ---------------- triggering ---------------- */
+function eligible(e) {
+  if (e.followup) return false;
+  if (e.once && S.seen.includes(e.id)) return false;
+  /* a repeatable situation should not come round again within a couple of years */
+  const last = (S.lastFired || {})[e.id];
+  if (last != null && S.day - last < 620) return false;
+  try { return !!e.when(); } catch (err) { return false; }
+}
+function maybeEvent() {
+  if (!S.startId || modalOpen()) return;
+  const due = S.pending.find(p => S.day >= p.day);
+  let ev = null;
+  if (due) {
+    ev = EVENTS.find(e => e.id === due.id);
+    S.pending = S.pending.filter(p => p !== due);
+  } else {
+    if (S.day < S.nextEventDay) return;
+    S.nextEventDay = S.day + irnd(55, 100);
+    const pool = EVENTS.filter(eligible);
+    if (!pool.length) return;
+    ev = pick(pool);
+  }
+  if (!ev) return;
+  if (!S.seen.includes(ev.id)) S.seen.push(ev.id);
+  S.lastFired = S.lastFired || {};
+  S.lastFired[ev.id] = S.day;
+  S.speed = 0;
+  openEvent(ev);
+}
+const evText = (v) => typeof v === 'function' ? v() : v;
+
+function openEvent(ev) {
+  ui.screen = 'event';
+  sfx('start');
+  const choices = ev.choices.map((c, i) => {
+    const cost = c.cost ? (typeof c.cost === 'function' ? c.cost() : c.cost) : 0;
+    const can = cost <= S.cash;
+    return '<button class="ev-choice" data-ch="' + i + '"' + (can ? '' : ' disabled') + '>' +
+      '<span class="ev-ch-main"><b>' + esc(c.label) + '</b>' +
+        (c.hint ? '<span class="ev-hint">' + esc(c.hint) + '</span>' : '') + '</span>' +
+      (cost ? '<span class="ev-cost' + (can ? '' : ' no') + '">' + moneyFull(cost) + '</span>' : '') +
+      '</button>';
+  }).join('');
+  sheet({
+    icon: ev.icon, title: evText(ev.title), size: 'md',
+    sub: '<span class="ev-tag">' + esc(ev.tag || 'Situation') + '</span> · ' + dotDate(),
+    body: '<div class="ev-body">' + evText(ev.body) + '</div>' +
+      '<div class="ev-choices">' + choices + '</div>',
+  });
+  /* an event is a decision: no dismissing it with the X or the backdrop */
+  const x = root.querySelector('[data-x]');
+  if (x) x.remove();
+  const back = root.querySelector('[data-back]');
+  if (back) back.removeAttribute('data-back');
+  root.querySelector('.ev-choices').onclick = e => {
+    const b = e.target.closest('[data-ch]');
+    if (!b || b.disabled) return;
+    const c = ev.choices[+b.dataset.ch];
+    const cost = c.cost ? (typeof c.cost === 'function' ? c.cost() : c.cost) : 0;
+    if (cost > S.cash) return;
+    if (cost) spend(cost);
+    sfx('click');
+    let outcome = '';
+    try { outcome = c.run() || ''; } catch (err) { outcome = 'It did not go to plan.'; }
+    logStory(evText(ev.title), c.label);
+    buildOfficeLayout();
+    queueSave();
+    showOutcome(ev, c, outcome, cost);
+  };
+}
+function showOutcome(ev, choice, outcome, cost) {
+  sheet({
+    icon: ev.icon, title: 'You chose: ' + choice.label, size: 'sm',
+    sub: evText(ev.title),
+    body: '<div class="ev-body">' + outcome + '</div>' +
+      (cost ? '<div class="kv" style="margin-top:12px"><span>Paid</span><b>' + moneyFull(cost) + '</b></div>' : '') +
+      '<div class="kv"><span>Cash now</span><b>' + moneyFull(S.cash) + '</b></div>',
+    foot: '<button class="btn primary wide" data-ok>Carry on</button>',
+  });
+  const x = root.querySelector('[data-x]');
+  if (x) x.remove();
+  root.querySelector('[data-ok]').onclick = () => { closeModal(); S.speed = 1; renderHUD(); };
+}
+
+/* ==========================================================================
    18. ROUTER, INPUT, BOOT
    ========================================================================== */
 function openScreen(name) {
   ({
     build: openBuild, employees: openEmployees, invest: openInvest, marketing: openMarketing,
     products: openProducts, market: openMarket, project: openProjectStatus, launch: openLaunch,
-    intro: openIntro, settings: openSettings, gameover: openGameOver, category: openBuild,
+    intro: openIntro, settings: openSettings, gameover: openGameOver, category: openBuild, story: openInvest,
   }[name] || openBuild)();
 }
 $('#menu').addEventListener('click', e => {

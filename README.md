@@ -43,6 +43,27 @@ appear as you pay for them.
 Short of cash? **Departments → Financing** lends against your net worth, repaid at
 135% over 24 months.
 
+## Situations
+
+Every couple of months something lands on your desk and time stops until you decide.
+There are 23 of them, gated by year, cash, headcount and reputation, so the story
+follows where the company actually went. A few examples:
+
+- A rival is poaching your best engineer — match the offer, counter with equity, or let them go.
+- You have been breached — disclose today, pay for a full audit, or fix it quietly
+  and hope. Burying it queues a follow-up months later, and it is much worse.
+- A patent troll has found you — settle, fight, or bin the letter and risk the lawsuit.
+- A basketball franchise is for sale — a $38M title contender, a $19M mid-table club,
+  a $9M perennial last place that the city adores, or stay out of sports entirely.
+- Fund a private space program, endow a foundation, buy the jet, put your name on a
+  stadium, or bail out a competitor who cannot make payroll.
+
+Choices are not free and not symmetrical: some cost money, some cost morale, some
+buy you something permanent. What you buy becomes a **holding** with its own
+monthly upkeep and its own modifiers — the basketball team raises hype and applicant
+quality and costs you $900k a month to run. Every decision is recorded under
+**Departments → Story**.
+
 ## The loop
 
 1. **Design a product** — smartphone, software app, indie game or smart wearable,
