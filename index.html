@@ -1,0 +1,3100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Startup Empire Tycoon</title>
+<meta name="description" content="Build a startup from a garage to a global empire: design products, hire talent, market launches and acquire your rivals.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   STARTUP EMPIRE TYCOON — styles
+   ============================================================ */
+:root{
+  --bg:#080c18;
+  --bg2:#0d1428;
+  --panel:#141d36;
+  --panel2:#1b2747;
+  --panel3:#233156;
+  --line:#2c3a63;
+  --line2:#3b4c7d;
+  --txt:#e8edff;
+  --muted:#8d9ac4;
+  --amber:#ffb020;
+  --amber2:#ff8f1f;
+  --cyan:#35d0e8;
+  --green:#3ddc90;
+  --red:#ff5d6c;
+  --purple:#a77bff;
+  --pink:#ff6fae;
+  --paper:#f6efe1;
+  --paper2:#e8dcc4;
+  --ink:#2a2317;
+  --radius:16px;
+  --shadow:0 18px 40px -12px rgba(0,0,0,.65);
+  --hud-h:64px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--txt);
+  font-family:'Outfit',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+  user-select:none;-webkit-user-select:none;
+}
+button{font-family:inherit;color:inherit;cursor:pointer}
+.mono{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.thin-sb::-webkit-scrollbar{width:8px;height:8px}
+.thin-sb::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}
+.thin-sb::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- App shell ---------- */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#stage{position:relative;flex:1;overflow:hidden;background:
+   radial-gradient(1200px 700px at 50% 30%, #1b2b4f 0%, transparent 60%), var(--bg)}
+#office{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#office.dragging{cursor:grabbing}
+
+/* ---------- HUD ---------- */
+#hud{
+  position:relative;z-index:30;display:flex;align-items:center;gap:12px;
+  padding:8px 12px;min-height:var(--hud-h);
+  background:linear-gradient(180deg,#131c36 0%, #0d1428 100%);
+  border-bottom:1px solid var(--line);
+  box-shadow:0 10px 30px -14px #000;
+}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-logo{
+  width:42px;height:42px;border-radius:12px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(145deg,var(--amber),var(--amber2));color:#2a1a00;
+  font-weight:900;font-size:19px;box-shadow:0 6px 16px -4px rgba(255,176,32,.55);
+}
+.brand-txt{min-width:0}
+.brand-name{font-weight:800;font-size:16px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26vw}
+.brand-sub{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+
+.stat-pill{
+  display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:12px;
+  background:var(--panel2);border:1px solid var(--line);white-space:nowrap;
+}
+.stat-pill .ico{font-size:15px;line-height:1}
+.stat-pill .lab{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700}
+.stat-pill .val{font-size:15px;font-weight:700;line-height:1.1}
+.val-cash{color:var(--green)} .val-fans{color:var(--pink)} .val-date{color:var(--cyan)}
+
+/* progress card */
+#projCard{
+  flex:1;min-width:0;max-width:520px;display:flex;flex-direction:column;gap:5px;
+  padding:7px 14px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);
+  position:relative;overflow:hidden;cursor:pointer;transition:.15s;
+}
+#projCard:hover{border-color:var(--line2);background:var(--panel3)}
+#projCard .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#projPhase{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#projName{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#projPct{font-size:13px;font-weight:800}
+.bar{height:9px;border-radius:99px;background:#0a1226;overflow:hidden;border:1px solid #0a1226}
+.bar>i{display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--amber2),var(--amber));
+  box-shadow:0 0 12px rgba(255,176,32,.5);transition:width .35s ease;position:relative}
+.bar>i::after{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.22) 0 8px,transparent 8px 16px);
+  animation:stripes 1.1s linear infinite}
+@keyframes stripes{to{background-position:32px 0}}
+.bar.cyan>i{background:linear-gradient(90deg,#1b9fd4,var(--cyan));box-shadow:0 0 12px rgba(53,208,232,.45)}
+
+/* speed controls */
+.speed{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--panel2);border:1px solid var(--line)}
+.speed button{
+  width:34px;height:30px;border-radius:8px;border:0;background:transparent;color:var(--muted);
+  font-weight:800;font-size:13px;display:grid;place-items:center;transition:.12s
+}
+.speed button:hover{background:var(--panel3);color:var(--txt)}
+.speed button.on{background:linear-gradient(145deg,var(--amber),var(--amber2));color:#2a1a00;
+  box-shadow:0 4px 12px -3px rgba(255,176,32,.6)}
+
+/* ---------- Floating right menu ---------- */
+#sideMenu{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);z-index:20;
+  display:flex;flex-direction:column;gap:9px;width:216px;
+}
+.menu-btn{
+  display:flex;align-items:center;gap:11px;width:100%;padding:11px 13px;text-align:left;
+  border-radius:14px;border:1px solid rgba(120,140,200,.26);
+  background:linear-gradient(145deg,rgba(24,34,62,.84),rgba(14,21,42,.84));
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 12px 26px -14px rgba(0,0,0,.85);transition:transform .14s,border-color .14s,background .14s;
+}
+.menu-btn:hover{transform:translateX(-5px);border-color:rgba(255,176,32,.55);
+  background:linear-gradient(145deg,rgba(38,52,92,.9),rgba(20,29,56,.9))}
+.menu-btn:active{transform:translateX(-2px) scale(.985)}
+.menu-btn .mi{
+  width:36px;height:36px;flex:none;border-radius:11px;display:grid;place-items:center;font-size:18px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09)
+}
+.menu-btn .mt{min-width:0}
+.menu-btn .mt b{display:block;font-size:13.5px;font-weight:700;line-height:1.15;white-space:nowrap}
+.menu-btn .mt span{display:block;font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-btn .badge{margin-left:auto;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;
+  background:var(--red);color:#fff;box-shadow:0 0 0 3px rgba(255,93,108,.18)}
+
+/* ---------- Office overlay chips ---------- */
+#officeInfo{position:absolute;left:14px;top:14px;z-index:15;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.chip{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;font-size:12px;font-weight:600;
+  background:rgba(14,21,42,.8);border:1px solid rgba(120,140,200,.24);backdrop-filter:blur(12px);
+}
+.chip b{font-weight:800}
+.chip.act:hover{border-color:rgba(255,176,32,.6);cursor:pointer}
+#zoomCtl{position:absolute;left:14px;bottom:14px;z-index:15;display:flex;gap:6px}
+#zoomCtl button{width:34px;height:34px;border-radius:10px;border:1px solid rgba(120,140,200,.24);
+  background:rgba(14,21,42,.8);backdrop-filter:blur(12px);font-size:16px;font-weight:800;display:grid;place-items:center}
+#zoomCtl button:hover{border-color:var(--line2);background:var(--panel2)}
+
+/* ---------- Toasts ---------- */
+#toasts{position:absolute;right:250px;bottom:16px;z-index:25;display:flex;flex-direction:column;gap:8px;
+  align-items:flex-end;pointer-events:none;max-width:min(380px,50vw)}
+.toast{
+  display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:13px;font-size:12.5px;line-height:1.35;
+  background:rgba(16,24,46,.94);border:1px solid var(--line);box-shadow:var(--shadow);
+  animation:toastIn .32s cubic-bezier(.2,1.3,.4,1) both;max-width:100%
+}
+.toast.out{animation:toastOut .3s ease forwards}
+.toast .ti{font-size:15px;line-height:1.1}
+.toast b{display:block;font-size:12.5px}
+.toast small{color:var(--muted);font-size:11px}
+.toast.good{border-color:rgba(61,220,144,.45)} .toast.bad{border-color:rgba(255,93,108,.5)}
+.toast.info{border-color:rgba(53,208,232,.45)} .toast.money{border-color:rgba(255,176,32,.5)}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(30px) scale(.95)}}
+
+/* ---------- Modals ---------- */
+#modalRoot{position:fixed;inset:0;z-index:60;display:none}
+#modalRoot.on{display:block}
+.mback{position:absolute;inset:0;background:rgba(4,7,16,.72);backdrop-filter:blur(7px);
+  display:grid;place-items:center;padding:24px;animation:fade .2s ease both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.mpanel{
+  width:min(1080px,96vw);max-height:min(88vh,900px);display:flex;flex-direction:column;
+  background:linear-gradient(180deg,var(--panel) 0%, var(--bg2) 100%);
+  border:1px solid var(--line2);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;
+  animation:pop .28s cubic-bezier(.2,1.2,.35,1) both
+}
+.mpanel.sm{width:min(560px,96vw)}
+.mpanel.md{width:min(760px,96vw)}
+@keyframes pop{from{opacity:0;transform:translateY(22px) scale(.96)}to{opacity:1;transform:none}}
+.mhead{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.04),transparent)}
+.mhead .hi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;
+  background:var(--panel3);border:1px solid var(--line2)}
+.mhead h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}
+.mhead p{margin:1px 0 0;font-size:11.5px;color:var(--muted)}
+.mx{margin-left:auto;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel2);font-size:15px;display:grid;place-items:center;transition:.14s}
+.mx:hover{background:var(--red);border-color:var(--red);color:#fff}
+.mbody{padding:18px 20px;overflow:auto;flex:1}
+.mfoot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;
+  background:rgba(0,0,0,.18);flex-wrap:wrap}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:12px;
+  border:1px solid var(--line2);background:var(--panel2);font-weight:700;font-size:13.5px;transition:.14s;
+}
+.btn:hover{background:var(--panel3);border-color:#4c609a;transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.42;cursor:not-allowed;transform:none!important}
+.btn.primary{background:linear-gradient(145deg,var(--amber),var(--amber2));border-color:#ffce6a;color:#2a1a00;
+  box-shadow:0 8px 20px -8px rgba(255,176,32,.75)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.green{background:linear-gradient(145deg,#4fe6a0,#23b978);border-color:#7df0bd;color:#062a1b;
+  box-shadow:0 8px 20px -8px rgba(61,220,144,.7)}
+.btn.red{background:linear-gradient(145deg,#ff7280,#e03a4c);border-color:#ffa0aa;color:#2c0409}
+.btn.cyan{background:linear-gradient(145deg,#53dcf2,#1a9fc4);border-color:#95ecfb;color:#03222c}
+.btn.ghost{background:transparent}
+.btn.sm{padding:7px 12px;font-size:12px;border-radius:10px}
+.btn.wide{width:100%}
+
+/* ---------- Cards / grids ---------- */
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:16px;padding:14px}
+.card.soft{background:rgba(255,255,255,.035)}
+.sec-title{font-size:10.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 9px}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:5px 0}
+.kv span{color:var(--muted)} .kv b{font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+
+/* ---------- Resume / hiring card ---------- */
+.resume-wrap{display:grid;place-items:center;padding:6px 0 2px;perspective:1400px}
+.resume{
+  width:min(560px,100%);position:relative;border-radius:8px;padding:22px 24px 20px;color:var(--ink);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.5),transparent 30%),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.028) 0 1px,transparent 1px 27px),
+    linear-gradient(160deg,var(--paper) 0%, var(--paper2) 100%);
+  box-shadow:0 26px 50px -18px rgba(0,0,0,.8), 0 2px 0 rgba(255,255,255,.35) inset;
+  font-family:'Outfit',sans-serif;
+  animation:cardIn .3s cubic-bezier(.2,1.2,.35,1) both;
+}
+.resume::before{content:'';position:absolute;inset:0;border-radius:8px;pointer-events:none;
+  border:1px solid rgba(0,0,0,.14);box-shadow:0 0 0 7px rgba(255,255,255,.22) inset}
+.resume::after{content:'';position:absolute;right:-1px;top:-1px;width:54px;height:54px;
+  background:linear-gradient(225deg,var(--bg2) 0 50%, transparent 50%);
+  filter:drop-shadow(-3px 3px 3px rgba(0,0,0,.35))}
+@keyframes cardIn{from{opacity:0;transform:rotateY(-12deg) translateY(14px)}to{opacity:1;transform:none}}
+.resume h3{margin:0;font-size:25px;font-weight:900;letter-spacing:-.02em;line-height:1.05}
+.resume .role{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#8a6a2a}
+.res-top{display:flex;gap:18px;align-items:flex-start}
+.photo{width:106px;height:126px;flex:none;border-radius:4px;overflow:hidden;background:#cfd8e6;
+  border:4px solid #fff;box-shadow:0 8px 18px -8px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.18);transform:rotate(-1.2deg)}
+.photo svg{display:block;width:100%;height:100%}
+.res-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-top:12px}
+.res-meta div{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;
+  border-bottom:1px dashed rgba(0,0,0,.22);padding-bottom:3px}
+.res-meta span{color:#6b5f48;font-weight:600}
+.res-meta b{font-weight:800}
+.skill-row{display:flex;align-items:center;gap:10px;margin-top:14px}
+.skill-bar{flex:1;height:12px;border-radius:99px;background:rgba(0,0,0,.13);overflow:hidden;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+.skill-bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e08d1c,#f0b731)}
+.skill-num{font-weight:900;font-size:20px;font-family:'JetBrains Mono',monospace}
+.traits{display:flex;flex-wrap:wrap;gap:6px;margin-top:13px}
+.trait{font-size:10.5px;font-weight:800;padding:4px 9px;border-radius:99px;letter-spacing:.04em;
+  background:rgba(0,0,0,.07);border:1px solid rgba(0,0,0,.16)}
+.trait.good{background:rgba(35,150,90,.16);border-color:rgba(35,150,90,.4);color:#1b6b42}
+.trait.bad{background:rgba(190,50,60,.14);border-color:rgba(190,50,60,.38);color:#8d2230}
+.salary-box{margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 14px;border-radius:6px;background:rgba(0,0,0,.06);border:1px dashed rgba(0,0,0,.28)}
+.salary-box .big{font-size:23px;font-weight:900;font-family:'JetBrains Mono',monospace;letter-spacing:-.02em}
+.stamp{
+  position:absolute;right:26px;bottom:18px;padding:7px 16px;border:5px double #159a55;color:#159a55;
+  font-weight:900;font-size:26px;letter-spacing:.14em;border-radius:7px;transform:rotate(-15deg) scale(2.6);
+  opacity:0;pointer-events:none;text-transform:uppercase;font-family:'Outfit',sans-serif;
+  text-shadow:0 1px 0 rgba(255,255,255,.4);mix-blend-mode:multiply;
+}
+.stamp.hit{animation:stampIn .55s cubic-bezier(.2,1.5,.4,1) forwards}
+.stamp.rej{border-color:#c0392b;color:#c0392b}
+@keyframes stampIn{
+  0%{opacity:0;transform:rotate(-30deg) scale(2.8)}
+  55%{opacity:1;transform:rotate(-13deg) scale(.92)}
+  70%{transform:rotate(-15deg) scale(1.06)}
+  100%{opacity:1;transform:rotate(-15deg) scale(1)}
+}
+.pager{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:14px}
+.pager .pg{font-size:12px;font-weight:800;letter-spacing:.1em;color:var(--muted)}
+.circ{width:40px;height:40px;border-radius:50%;border:1px solid var(--line2);background:var(--panel2);
+  display:grid;place-items:center;font-size:16px;font-weight:800;transition:.14s}
+.circ:hover{background:var(--panel3);transform:scale(1.07)}
+
+/* ---------- Product builder ---------- */
+.builder{display:grid;grid-template-columns:270px minmax(0,1fr) 250px;gap:16px}
+.part-list{display:flex;flex-direction:column;gap:7px}
+.part-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;text-align:left;
+  border:1px solid var(--line);background:var(--panel2);transition:.13s;width:100%}
+.part-btn:hover{border-color:var(--line2);background:var(--panel3)}
+.part-btn.on{border-color:var(--amber);background:linear-gradient(145deg,rgba(255,176,32,.16),rgba(255,176,32,.05));
+  box-shadow:0 0 0 1px rgba(255,176,32,.35)}
+.part-btn .pi{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;font-size:15px;
+  background:rgba(255,255,255,.07);flex:none}
+.part-btn .pt{min-width:0;flex:1}
+.part-btn .pt b{display:block;font-size:12.5px;font-weight:700}
+.part-btn .pt span{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.opt{position:relative;padding:12px;border-radius:13px;text-align:left;border:1px solid var(--line);
+  background:var(--panel2);transition:.13s;overflow:hidden}
+.opt:hover{border-color:var(--line2);transform:translateY(-2px)}
+.opt.on{border-color:var(--cyan);background:linear-gradient(160deg,rgba(53,208,232,.17),rgba(53,208,232,.04));
+  box-shadow:0 0 0 1px rgba(53,208,232,.4),0 10px 22px -12px rgba(53,208,232,.6)}
+.opt.lock{opacity:.5;cursor:not-allowed}
+.opt.lock:hover{transform:none;border-color:var(--line)}
+.opt b{display:block;font-size:13px;font-weight:700;margin-bottom:7px;padding-right:18px}
+.opt .tick{position:absolute;top:10px;right:10px;font-size:12px;color:var(--cyan);opacity:0;transition:.13s}
+.opt.on .tick{opacity:1}
+.mini{display:flex;gap:9px;flex-wrap:wrap;font-size:10.5px;color:var(--muted);font-weight:600}
+.mini i{font-style:normal}
+.mini .d{color:var(--purple)} .mini .t{color:var(--cyan)} .mini .c{color:var(--amber)}
+.pv-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px}
+#previewCanvas{width:100%;max-width:250px;aspect-ratio:3/4;border-radius:16px;
+  background:radial-gradient(circle at 50% 35%,#24345e 0%,#0d1428 70%);border:1px solid var(--line)}
+.pv-stat{width:100%;display:flex;justify-content:space-between;font-size:12px;padding:6px 10px;border-radius:9px;
+  background:rgba(255,255,255,.04)}
+.pv-stat b{font-weight:800}
+.slider{width:100%;-webkit-appearance:none;appearance:none;height:7px;border-radius:99px;background:var(--panel3);outline:none}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+  background:linear-gradient(145deg,var(--amber),var(--amber2));border:2px solid #fff3;cursor:grab;
+  box-shadow:0 3px 10px -2px rgba(255,176,32,.8)}
+.slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--amber);border:2px solid #fff3;cursor:grab}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.tab{padding:9px 15px;border-radius:11px;border:1px solid var(--line);background:var(--panel2);
+  font-size:12.5px;font-weight:700;transition:.13s;display:flex;align-items:center;gap:7px}
+.tab:hover{background:var(--panel3)}
+.tab.on{background:linear-gradient(145deg,var(--amber),var(--amber2));color:#2a1a00;border-color:#ffce6a;
+  box-shadow:0 7px 16px -8px rgba(255,176,32,.8)}
+.inp{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--line2);background:#0a1226;color:var(--txt);font-size:14px;font-weight:600;font-family:inherit}
+.inp:focus{outline:2px solid var(--amber);outline-offset:1px}
+
+/* ---------- Employee roster ---------- */
+.emp-row{display:flex;align-items:center;gap:12px;padding:11px;border-radius:14px;background:var(--panel2);
+  border:1px solid var(--line)}
+.emp-av{width:46px;height:46px;border-radius:12px;overflow:hidden;flex:none;background:#243056;
+  border:1px solid var(--line2)}
+.emp-av svg{width:100%;height:100%;display:block}
+.tagr{font-size:9.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:99px}
+.r-design{background:rgba(167,123,255,.2);color:#c9adff;border:1px solid rgba(167,123,255,.4)}
+.r-engineer{background:rgba(53,208,232,.18);color:#8de9f7;border:1px solid rgba(53,208,232,.4)}
+.r-marketer{background:rgba(255,111,174,.18);color:#ffb0d3;border:1px solid rgba(255,111,174,.4)}
+.r-ops{background:rgba(61,220,144,.18);color:#9ceecb;border:1px solid rgba(61,220,144,.4)}
+.ebar{height:6px;border-radius:99px;background:#0a1226;overflow:hidden;min-width:70px;flex:1}
+.ebar>i{display:block;height:100%;border-radius:99px;background:var(--green)}
+.ebar.low>i{background:var(--red)}
+
+/* ---------- Product cards / charts ---------- */
+.prod-card{border-radius:16px;border:1px solid var(--line);background:var(--panel2);overflow:hidden}
+.prod-top{display:flex;gap:12px;padding:13px;align-items:flex-start}
+.prod-ico{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;font-size:25px;flex:none;
+  background:linear-gradient(145deg,var(--panel3),#18244a);border:1px solid var(--line2)}
+.stars{color:var(--amber);font-size:13px;letter-spacing:1px}
+.spark{display:block;width:100%;height:42px}
+.share-row{display:flex;align-items:center;gap:10px;padding:9px 0}
+.share-bar{flex:1;height:14px;border-radius:99px;background:#0a1226;overflow:hidden}
+.share-bar>i{display:block;height:100%;border-radius:99px;transition:width .5s}
+.review{padding:11px 13px;border-radius:13px;background:var(--panel2);border:1px solid var(--line);
+  border-left:3px solid var(--amber)}
+.review q{font-style:italic;color:#cdd6f5;font-size:12.5px;display:block;line-height:1.45}
+.review .by{font-size:11px;color:var(--muted);margin-top:6px;display:flex;justify-content:space-between;gap:8px}
+
+/* ---------- Launch celebration ---------- */
+.launch-hero{text-align:center;padding:10px 0 4px}
+.launch-score{font-size:74px;font-weight:900;line-height:1;letter-spacing:-.04em;
+  background:linear-gradient(180deg,#fff,var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:scorePop .6s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes scorePop{from{opacity:0;transform:scale(.4) rotate(-8deg)}to{opacity:1;transform:none}}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:90}
+
+/* ---------- Misc ---------- */
+.empty{text-align:center;padding:44px 20px;color:var(--muted);font-size:13.5px}
+.empty .big{font-size:44px;display:block;margin-bottom:10px;opacity:.6}
+.hr{height:1px;background:var(--line);margin:14px 0;border:0}
+.pulse{animation:pulseGlow 1.6s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,176,32,.5)}50%{box-shadow:0 0 0 9px rgba(255,176,32,0)}}
+.float-cash{position:absolute;pointer-events:none;font-weight:900;font-size:14px;color:var(--green);
+  text-shadow:0 2px 6px rgba(0,0,0,.8);animation:floatUp 1.5s ease-out forwards;z-index:16}
+@keyframes floatUp{0%{opacity:0;transform:translateY(6px) scale(.8)}18%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-52px) scale(1)}}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1080px){
+  .builder{grid-template-columns:220px minmax(0,1fr)}
+  .pv-wrap{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:flex-start}
+  #previewCanvas{max-width:190px}
+}
+@media (max-width:860px){
+  :root{--hud-h:auto}
+  #hud{flex-wrap:wrap;padding:8px}
+  .brand-name{max-width:40vw}
+  #projCard{order:5;max-width:none;flex-basis:100%}
+  #sideMenu{top:auto;bottom:10px;right:10px;left:10px;transform:none;width:auto;
+    flex-direction:row;overflow-x:auto;gap:7px;padding-bottom:2px}
+  .menu-btn{width:auto;flex:1 0 auto;padding:9px 11px}
+  .menu-btn .mt span{display:none}
+  .menu-btn:hover{transform:translateY(-4px)}
+  #toasts{right:10px;bottom:86px;max-width:70vw}
+  #zoomCtl{bottom:88px}
+  .mback{padding:0}
+  .mpanel{width:100vw!important;max-height:100vh;height:100%;border-radius:0;border:0}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .builder{grid-template-columns:1fr}
+  .part-list{flex-direction:row;overflow-x:auto;padding-bottom:6px}
+  .part-btn{flex:0 0 auto;width:auto}
+  .part-btn .pt span{display:none}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ TOP HUD ============ -->
+  <header id="hud">
+    <div class="brand">
+      <div class="brand-logo" id="brandLogo">S</div>
+      <div class="brand-txt">
+        <div class="brand-name" id="hudCompany">Startup Empire</div>
+        <div class="brand-sub" id="hudTier">Garage Startup</div>
+      </div>
+    </div>
+
+    <div class="stat-pill">
+      <span class="ico">💰</span>
+      <div><div class="lab">Cash</div><div class="val val-cash mono" id="hudCash">$0</div></div>
+    </div>
+
+    <div class="stat-pill">
+      <span class="ico">💖</span>
+      <div><div class="lab">Fans</div><div class="val val-fans mono" id="hudFans">0</div></div>
+    </div>
+
+    <div id="projCard" title="Open project screen">
+      <div class="row">
+        <div style="min-width:0">
+          <div id="projPhase">NO ACTIVE PROJECT</div>
+          <div id="projName">Click to start building something</div>
+        </div>
+        <div id="projPct" class="mono">—</div>
+      </div>
+      <div class="bar"><i id="projBar" style="width:0%"></i></div>
+    </div>
+
+    <div class="stat-pill">
+      <span class="ico">📅</span>
+      <div><div class="lab">Date</div><div class="val val-date mono" id="hudDate">Jan 2002</div></div>
+    </div>
+
+    <div class="speed" id="speedCtl">
+      <button data-speed="0" title="Pause (Space)">❚❚</button>
+      <button data-speed="1" class="on" title="Normal (1)">▶</button>
+      <button data-speed="2" title="Fast (2)">▶▶</button>
+      <button data-speed="4" title="Turbo (3)">▶▶▶</button>
+    </div>
+  </header>
+
+  <!-- ============ STAGE ============ -->
+  <main id="stage">
+    <canvas id="office"></canvas>
+
+    <div id="officeInfo">
+      <div class="chip act" id="officeChip">
+        <span>🏢</span><span>Office <b id="chipLvl">Lv.1</b></span>
+        <span style="color:var(--muted)">·</span>
+        <span>👥 <b id="chipCap">0/4</b> desks</span>
+      </div>
+      <div class="chip" id="hypeChip">
+        <span>🔥</span><span>Hype <b id="chipHype">0%</b></span>
+        <span style="color:var(--muted)">·</span>
+        <span>📈 <b id="chipShare">0%</b> market</span>
+      </div>
+    </div>
+
+    <div id="zoomCtl">
+      <button id="zoomIn" title="Zoom in">+</button>
+      <button id="zoomOut" title="Zoom out">−</button>
+      <button id="zoomReset" title="Recenter">⤢</button>
+    </div>
+
+    <nav id="sideMenu">
+      <button class="menu-btn" data-screen="build">
+        <span class="mi">📱</span>
+        <span class="mt"><b>New Project</b><span>Design your next product</span></span>
+      </button>
+      <button class="menu-btn" data-screen="employees">
+        <span class="mi">👥</span>
+        <span class="mt"><b>Employees</b><span>Hire &amp; manage the team</span></span>
+        <span class="badge" id="hireBadge" hidden>!</span>
+      </button>
+      <button class="menu-btn" data-screen="marketing">
+        <span class="mi">📣</span>
+        <span class="mt"><b>Marketing</b><span>Campaigns &amp; hype</span></span>
+      </button>
+      <button class="menu-btn" data-screen="products">
+        <span class="mi">📦</span>
+        <span class="mt"><b>Products</b><span>Portfolio &amp; revenue</span></span>
+      </button>
+      <button class="menu-btn" data-screen="market">
+        <span class="mi">📊</span>
+        <span class="mt"><b>Ratings &amp; Market</b><span>Reviews, share &amp; M&amp;A</span></span>
+      </button>
+    </nav>
+
+    <div id="toasts"></div>
+  </main>
+</div>
+
+<div id="modalRoot"></div>
+<canvas class="confetti" id="confetti" hidden></canvas>
+
+<script>
+"use strict";
+/* ==========================================================================
+   STARTUP EMPIRE TYCOON
+   A single-file tycoon sim: design products, hire talent, market launches,
+   grow the office and acquire rivals.
+   ========================================================================== */
+
+/* ------------------------------ helpers ------------------------------ */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const irnd = (a, b) => Math.floor(rnd(a, b + 1));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+function money(n) {
+  const s = n < 0 ? '-' : '';
+  n = Math.abs(Math.round(n));
+  if (n >= 1e9) return s + '$' + (n / 1e9).toFixed(n >= 1e10 ? 1 : 2) + 'B';
+  if (n >= 1e6) return s + '$' + (n / 1e6).toFixed(n >= 1e7 ? 1 : 2) + 'M';
+  if (n >= 1e4) return s + '$' + Math.round(n / 1e3) + 'k';
+  return s + '$' + n.toLocaleString('en-US');
+}
+function num(n) {
+  n = Math.round(n);
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e4) return (n / 1e3).toFixed(0) + 'k';
+  return n.toLocaleString('en-US');
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function stars(r) {
+  const full = Math.floor(r / 2), half = r / 2 - full >= .5;
+  return '★'.repeat(full) + (half ? '✩' : '') + '☆'.repeat(Math.max(0, 5 - full - (half ? 1 : 0)));
+}
+/* seeded RNG so avatars/characters stay stable across reloads */
+function seeded(seed) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return function () { h = (h * 1664525 + 1013904223) >>> 0; return h / 4294967296; };
+}
+
+/* ==========================================================================
+   1. GAME DATA
+   ========================================================================== */
+
+/* option factory: name, devCost, devDays, designPts, techPts, unitCost, techLevelReq */
+const o = (n, c, d, dz, tz, u = 0, req = 1) => ({ n, c, d, dz, tz, u, req });
+
+const CATEGORIES = {
+  phone: {
+    id: 'phone', name: 'Smartphone', icon: '📱', tagline: 'Hardware with fat margins — and fat costs.',
+    baseDays: 22, baseCost: 9000, market: .3, wD: .5, wT: .5, priceHint: 2.1,
+    parts: [
+      { key: 'screen', label: 'Display', icon: '🖥️', opts: [
+        o('4.5" LCD', 2000, 3, 2, 3, 26), o('6.1" IPS', 6000, 5, 6, 7, 58, 1),
+        o('6.5" AMOLED', 15000, 8, 13, 12, 118, 2), o('7.6" Foldable OLED', 42000, 14, 22, 20, 305, 4) ] },
+      { key: 'camera', label: 'Camera', icon: '📷', opts: [
+        o('8MP Single', 1500, 2, 3, 2, 14), o('24MP Dual', 7000, 5, 8, 6, 52, 1),
+        o('64MP Triple OIS', 19000, 9, 15, 13, 124, 3), o('200MP Periscope', 46000, 13, 23, 21, 268, 5) ] },
+      { key: 'battery', label: 'Battery', icon: '🔋', opts: [
+        o('3000 mAh', 1200, 2, 1, 3, 12), o('4200 mAh', 4200, 4, 4, 7, 31, 1),
+        o('5000 mAh Fast', 11000, 6, 8, 12, 66, 2), o('6000 mAh Graphene', 31000, 11, 14, 21, 148, 4) ] },
+      { key: 'chip', label: 'Chipset', icon: '🧠', opts: [
+        o('Budget A1', 3000, 3, 1, 5, 22), o('Midrange B4', 9500, 6, 4, 11, 61, 1),
+        o('Flagship X9', 27000, 10, 9, 20, 152, 3), o('Custom Neural Core', 68000, 16, 15, 32, 295, 5) ] },
+      { key: 'body', label: 'Materials', icon: '💎', opts: [
+        o('Polycarbonate', 900, 1, 2, 1, 9), o('Aluminium Unibody', 4500, 3, 8, 3, 34, 1),
+        o('Glass + Steel', 12000, 5, 15, 5, 78, 2), o('Titanium Ceramic', 33000, 9, 26, 9, 180, 4) ] },
+      { key: 'extra', label: 'Signature Feature', icon: '✨', opts: [
+        o('None', 0, 0, 0, 0, 0), o('Fingerprint Unlock', 3500, 3, 4, 5, 16, 1),
+        o('FaceID + Stereo', 13000, 6, 11, 10, 48, 3), o('Satellite + Holo UI', 40000, 12, 24, 19, 122, 5) ] },
+    ]
+  },
+  app: {
+    id: 'app', name: 'Software App', icon: '💻', tagline: 'Near-zero unit cost. Retention is everything.',
+    baseDays: 14, baseCost: 4000, market: 1.35, wD: .55, wT: .45, priceHint: 1.0,
+    parts: [
+      { key: 'core', label: 'Architecture', icon: '⚙️', opts: [
+        o('No-code Template', 1200, 2, 1, 2, 0), o('Custom Backend', 5500, 5, 4, 9, 1, 1),
+        o('Microservices', 15000, 9, 7, 17, 2, 2), o('Global Edge Mesh', 38000, 14, 12, 29, 4, 4) ] },
+      { key: 'ux', label: 'UI / UX', icon: '🎨', opts: [
+        o('Stock Components', 800, 1, 2, 1, 0), o('Custom Design System', 4800, 4, 10, 3, 0, 1),
+        o('Motion-rich Interface', 13500, 7, 19, 6, 1, 2), o('Award-winning Studio', 36000, 12, 31, 9, 2, 4) ] },
+      { key: 'feature', label: 'Killer Feature', icon: '🚀', opts: [
+        o('Basic CRUD', 700, 1, 1, 2, 0), o('Realtime Sync', 5200, 5, 6, 8, 1, 1),
+        o('AI Assistant', 17000, 9, 13, 17, 3, 3), o('Autonomous Agents', 44000, 15, 21, 30, 6, 5) ] },
+      { key: 'sec', label: 'Security', icon: '🔐', opts: [
+        o('Basic Auth', 300, 1, 0, 1, 0), o('TLS + 2FA', 2600, 3, 2, 6, 0, 1),
+        o('End-to-end Crypto', 9500, 6, 5, 13, 1, 2), o('Zero-trust + Audits', 26000, 10, 9, 23, 2, 4) ] },
+      { key: 'plat', label: 'Platforms', icon: '🌐', opts: [
+        o('Web only', 0, 0, 0, 0, 0), o('Web + iOS', 4000, 4, 3, 5, 0, 1),
+        o('All Platforms', 12500, 7, 8, 11, 1, 2), o('All + Wearables + TV', 30000, 11, 14, 18, 2, 4) ] },
+      { key: 'money', label: 'Monetization', icon: '💵', opts: [
+        o('Free (ad-free)', 0, 0, 5, 0, 0), o('Ad Supported', 1500, 2, -3, 3, 0, 1),
+        o('Subscription', 5000, 4, 3, 6, 0, 2), o('Freemium + Enterprise', 14000, 7, 6, 12, 1, 3) ] },
+    ]
+  },
+  game: {
+    id: 'game', name: 'Indie Game', icon: '🎮', tagline: 'High risk, huge fan growth when it lands.',
+    baseDays: 20, baseCost: 6000, market: 1.5, wD: .62, wT: .38, priceHint: 1.0,
+    parts: [
+      { key: 'engine', label: 'Engine', icon: '🛠️', opts: [
+        o('2D Starter Kit', 900, 2, 2, 2, 0), o('3D Indie Engine', 5600, 5, 6, 8, 1, 1),
+        o('Licensed AAA Engine', 17000, 9, 11, 17, 3, 3), o('In-house "Nova" Engine', 45000, 16, 18, 29, 5, 5) ] },
+      { key: 'art', label: 'Art Direction', icon: '🖌️', opts: [
+        o('Pixel Art', 1100, 2, 7, 1, 0), o('Hand-drawn 2D', 6200, 6, 15, 2, 1, 1),
+        o('Stylized 3D', 16500, 9, 24, 7, 2, 2), o('Photoreal + Mocap', 43000, 15, 36, 13, 4, 4) ] },
+      { key: 'audio', label: 'Audio', icon: '🎧', opts: [
+        o('Chiptune', 400, 1, 3, 1, 0), o('Licensed Tracks', 3400, 3, 8, 2, 1, 1),
+        o('Original Score', 11000, 6, 16, 4, 1, 2), o('Live Orchestra', 29000, 10, 27, 6, 3, 4) ] },
+      { key: 'depth', label: 'Gameplay Depth', icon: '🧩', opts: [
+        o('One Simple Loop', 600, 1, 3, 2, 0), o('Deep Systems', 5800, 6, 11, 9, 0, 1),
+        o('Open World', 19000, 11, 19, 16, 2, 3), o('Sandbox + Mod Tools', 41000, 15, 28, 25, 3, 5) ] },
+      { key: 'multi', label: 'Multiplayer', icon: '🕹️', opts: [
+        o('Single-player', 0, 0, 0, 0, 0), o('Local Co-op', 3200, 3, 5, 4, 0, 1),
+        o('Online PvP', 14000, 8, 10, 14, 2, 3), o('Persistent MMO Servers', 38000, 14, 16, 27, 6, 5) ] },
+      { key: 'story', label: 'Narrative', icon: '📖', opts: [
+        o('No Story', 0, 0, 0, 0, 0), o('Light Framing', 2200, 2, 5, 0, 0, 1),
+        o('Branching Arcs', 9800, 6, 15, 3, 1, 2), o('Cinematic Universe', 27000, 11, 26, 6, 2, 4) ] },
+    ]
+  },
+  wearable: {
+    id: 'wearable', name: 'Smart Wearable', icon: '⌚', tagline: 'Small margins, loyal fans, fast cycles.',
+    baseDays: 18, baseCost: 7000, market: .5, wD: .52, wT: .48, priceHint: 2.0,
+    parts: [
+      { key: 'disp', label: 'Display', icon: '🔆', opts: [
+        o('Mono LCD', 1100, 2, 2, 2, 11), o('Color TFT', 4300, 4, 6, 5, 33, 1),
+        o('AMOLED Always-on', 12500, 7, 13, 10, 79, 2), o('MicroLED Curved', 33000, 12, 22, 18, 173, 4) ] },
+      { key: 'sensor', label: 'Sensor Suite', icon: '📡', opts: [
+        o('Step Counter', 800, 1, 1, 2, 7), o('Heart + SpO2', 5200, 5, 5, 9, 38, 1),
+        o('ECG + Sleep Lab', 15500, 8, 11, 17, 92, 3), o('Glucose + Neuro', 41000, 14, 19, 30, 205, 5) ] },
+      { key: 'band', label: 'Band & Case', icon: '💠', opts: [
+        o('Silicone', 500, 1, 3, 0, 6), o('Woven Nylon', 2600, 3, 8, 1, 20, 1),
+        o('Milanese Steel', 9000, 5, 16, 2, 58, 2), o('Sapphire + Ti', 25000, 9, 27, 5, 140, 4) ] },
+      { key: 'batt', label: 'Battery', icon: '🔋', opts: [
+        o('18h', 900, 1, 0, 2, 8), o('3 days', 3900, 4, 3, 7, 26, 1),
+        o('9 days', 11500, 7, 7, 14, 62, 2), o('Solar Hybrid', 29000, 11, 12, 23, 131, 4) ] },
+      { key: 'conn', label: 'Connectivity', icon: '📶', opts: [
+        o('Bluetooth', 600, 1, 0, 2, 5), o('BT + WiFi', 3100, 3, 2, 6, 19, 1),
+        o('LTE eSIM', 12000, 7, 6, 14, 64, 3), o('Sat + UWB', 31000, 12, 11, 24, 142, 5) ] },
+      { key: 'soft', label: 'Companion App', icon: '📲', opts: [
+        o('Bare Minimum', 400, 1, 1, 1, 0), o('Coaching App', 3600, 4, 7, 5, 0, 1),
+        o('AI Health Coach', 13000, 8, 14, 12, 1, 3), o('Clinical Platform', 32000, 13, 23, 21, 2, 5) ] },
+    ]
+  },
+};
+
+/* ------------------------------ office levels ------------------------------ */
+const OFFICES = [
+  { name: 'Garage',            w: 6,  h: 5,  desks: 4,  cost: 0,       rugs: 1, perk: 'Where every empire starts.' },
+  { name: 'Co-working Loft',   w: 8,  h: 6,  desks: 8,  cost: 45000,   rugs: 2, perk: '+1 candidate quality' },
+  { name: 'Startup HQ',        w: 10, h: 7,  desks: 12, cost: 180000,  rugs: 2, perk: 'Server rack: +8% dev speed' },
+  { name: 'Tech Campus',       w: 12, h: 8,  desks: 18, cost: 750000,  rugs: 3, perk: 'Lab: +6% product quality' },
+  { name: 'Skyline Tower',     w: 14, h: 9,  desks: 26, cost: 3200000, rugs: 3, perk: 'Prestige: +15% hype decay resist' },
+  { name: 'Orbital Campus',    w: 16, h: 10, desks: 36, cost: 14000000, rugs: 4, perk: 'Legend status: +20% fan gain' },
+];
+
+const TIERS = [
+  [0, 'Garage Startup'], [150000, 'Seed Stage'], [900000, 'Series A'], [4000000, 'Scale-up'],
+  [20000000, 'Market Leader'], [90000000, 'Industry Titan'], [400000000, 'Global Empire'],
+];
+
+/* ------------------------------ people data ------------------------------ */
+const ROLES = {
+  design:   { key: 'design',   label: 'Designer',  icon: '🎨', blurb: 'Adds design points & product polish', color: '#a77bff' },
+  engineer: { key: 'engineer', label: 'Engineer',  icon: '⚙️', blurb: 'Adds tech points & dev speed',       color: '#35d0e8' },
+  marketer: { key: 'marketer', label: 'Marketer',  icon: '📣', blurb: 'Generates hype & boosts sales',      color: '#ff6fae' },
+  ops:      { key: 'ops',      label: 'Operations',icon: '📋', blurb: 'Cuts costs & keeps morale high',     color: '#3ddc90' },
+};
+
+const COUNTRIES = [
+  { n: 'United States', f: '🇺🇸', m: 1.25 }, { n: 'Canada', f: '🇨🇦', m: 1.1 },
+  { n: 'United Kingdom', f: '🇬🇧', m: 1.15 }, { n: 'Germany', f: '🇩🇪', m: 1.12 },
+  { n: 'France', f: '🇫🇷', m: 1.05 }, { n: 'Sweden', f: '🇸🇪', m: 1.08 },
+  { n: 'Poland', f: '🇵🇱', m: .78 }, { n: 'Portugal', f: '🇵🇹', m: .82 },
+  { n: 'Brazil', f: '🇧🇷', m: .7 }, { n: 'India', f: '🇮🇳', m: .62 },
+  { n: 'Japan', f: '🇯🇵', m: 1.18 }, { n: 'South Korea', f: '🇰🇷', m: 1.02 },
+  { n: 'Nigeria', f: '🇳🇬', m: .6 }, { n: 'Egypt', f: '🇪🇬', m: .58 },
+  { n: 'Israel', f: '🇮🇱', m: 1.14 }, { n: 'Australia', f: '🇦🇺', m: 1.12 },
+  { n: 'Spain', f: '🇪🇸', m: .9 }, { n: 'Mexico', f: '🇲🇽', m: .72 },
+  { n: 'Vietnam', f: '🇻🇳', m: .55 }, { n: 'Estonia', f: '🇪🇪', m: .85 },
+];
+
+const FIRST = ['Mika','Alex','Sora','Nina','Omar','Lena','Ravi','Jun','Ada','Theo','Iris','Kai','Noa','Yara','Felix','Zoe',
+  'Diego','Amara','Luka','Ines','Hugo','Maya','Idris','Elif','Nils','Priya','Tomas','Aisha','Ola','Ryu','Sven','Nadia',
+  'Bruno','Chiara','Ezra','Freya','Hana','Ilya','Jonas','Keira','Liam','Mei','Noor','Pablo','Quinn','Rosa','Sami','Tariq'];
+const LAST = ['Okafor','Lindgren','Ramos','Petrov','Nakamura','Varga','Silva','Kowalski','Mbeki','Dubois','Haddad','Novak',
+  'Ferreira','Larsen','Chandra','Yilmaz','Weber','Kaplan','Moreau','Costa','Bakker','Santos','Rahman','Ivanov','Kim',
+  'Schneider','Almeida','Duarte','Fischer','Gruber','Holm','Iqbal','Jansen','Keller','Lombardi','Marek','Nyberg'];
+
+const TRAITS = [
+  { n: 'Night Owl',     good: true,  fx: 'work', v: .12, d: '+12% output' },
+  { n: 'Perfectionist', good: true,  fx: 'design', v: .18, d: '+18% design' },
+  { n: 'Ex-FAANG',      good: true,  fx: 'tech', v: .18, d: '+18% tech' },
+  { n: 'Hype Machine',  good: true,  fx: 'hype', v: .25, d: '+25% hype' },
+  { n: 'Mentor',        good: true,  fx: 'team', v: .06, d: '+6% team output' },
+  { n: 'Fast Learner',  good: true,  fx: 'grow', v: .5,  d: 'Skill grows faster' },
+  { n: 'Workaholic',    good: true,  fx: 'stam', v: -.3, d: 'Burns energy fast' },
+  { n: 'Burnt Out',     good: false, fx: 'work', v: -.15, d: '-15% output' },
+  { n: 'Meeting Lover', good: false, fx: 'team', v: -.04, d: '-4% team output' },
+  { n: 'Job Hopper',    good: false, fx: 'quit', v: .0,  d: 'May quit early' },
+  { n: 'Expensive',     good: false, fx: 'cost', v: .25, d: '+25% salary' },
+];
+
+const RIVAL_SEED = [
+  { name: 'Cuperto Inc.',   icon: '🍏', focus: 'phone',    share: 31, value: 380000000, strength: 8.6 },
+  { name: 'Gooseberry',     icon: '🫐', focus: 'app',      share: 24, value: 210000000, strength: 7.8 },
+  { name: 'Nimbus Soft',    icon: '☁️', focus: 'app',      share: 15, value: 120000000, strength: 6.9 },
+  { name: 'Voxel Forge',    icon: '🎲', focus: 'game',     share: 11, value: 72000000,  strength: 6.2 },
+  { name: 'Kinetiq Wear',   icon: '⌚', focus: 'wearable', share: 7,  value: 44000000,  strength: 5.6 },
+  { name: 'Byte Bazaar',    icon: '🛒', focus: 'app',      share: 4,  value: 26000000,  strength: 4.8 },
+];
+
+const CAMPAIGNS = [
+  { id: 'social', name: 'Social Blast',   icon: '📱', cost: 2500,    hype: .10, fans: 120,    days: 7,  d: 'Scrappy posts and a few memes.' },
+  { id: 'blog',   name: 'Tech Blog Push', icon: '📰', cost: 9000,    hype: .22, fans: 600,    days: 12, d: 'Reviews on the sites nerds read.' },
+  { id: 'influ',  name: 'Influencer Tour',icon: '🎥', cost: 32000,   hype: .40, fans: 2600,   days: 18, d: 'Unboxings from the big channels.' },
+  { id: 'tv',     name: 'Primetime TV',   icon: '📺', cost: 120000,  hype: .70, fans: 11000,  days: 25, d: 'Your logo between the sitcoms.' },
+  { id: 'event',  name: 'Keynote Event',  icon: '🎤', cost: 420000,  hype: 1.15, fans: 46000, days: 32, d: 'One more thing... a global stream.' },
+  { id: 'world',  name: 'World Takeover', icon: '🌍', cost: 1800000, hype: 2.10, fans: 210000, days: 45, d: 'Stadiums, satellites, skywriting.' },
+];
+
+const REVIEWERS = ['The Verge-ish','TechDaily','GadgetGuru','PixelPress','StartupWire','AppSage','ByteCritic','NextWave','CodeReport','MarketWatchr'];
+const REVIEW_LINES = {
+  great: ['A genuinely category-defining release.','Everything here just works — and then some.','The competition should be nervous.','Easily the best {cat} of the year.','Buy it. Seriously, stop reading.'],
+  good:  ['Solid, thoughtful and well-built.','A real contender with a few rough edges.','Great value for what you get.','It nails the fundamentals.','Impressive work from a small team.'],
+  mid:   ['Competent, but it never surprises you.','Fine. Just… fine.','Good ideas fighting a tight budget.','It works, but nothing here sings.','Wait for the next one.'],
+  bad:   ['Ambitious on the box, rough in the hand.','Feels unfinished at launch.','Hard to recommend at this price.','A misfire the team can learn from.','Charming in theory, painful in practice.'],
+};
+
+/* ==========================================================================
+   2. STATE
+   ========================================================================== */
+const SAVE_KEY = 'startup-empire-tycoon-v1';
+const START_DATE = new Date(2002, 0, 1);
+const MS_PER_DAY = 700;          /* real ms per in-game day at 1x */
+
+let S = null;                    /* the game state */
+let ui = { screen: null, candIndex: 0, buildCat: 'app', buildPart: 0, buildSpecs: {}, buildName: '', pricePct: 50, stamped: false };
+
+function freshState() {
+  return {
+    company: 'Nova Labs',
+    cash: 60000,
+    fans: 0,
+    day: 0,
+    speed: 1,
+    officeLevel: 0,
+    employees: [],
+    candidates: [],
+    candidateSeed: 0,
+    project: null,
+    products: [],
+    hype: 0,
+    campaigns: [],
+    rivals: RIVAL_SEED.map(r => ({ ...r, id: uid(), owned: false })),
+    reviews: [],
+    share: 2,
+    stats: { revenue: 0, spend: 0, units: 0, launches: 0, best: 0, hires: 0, acquisitions: 0 },
+    revenueLog: [],
+    lastMonth: 0,
+    created: Date.now(),
+  };
+}
+
+function techLevel() {
+  const yrs = gameDate().getFullYear() - 2002;
+  return clamp(1 + Math.floor(S.products.length / 3) + Math.floor(yrs / 3)
+    + Math.floor(S.officeLevel / 2) + S.stats.acquisitions, 1, 6);
+}
+function tierName() {
+  const worth = netWorth();
+  let name = TIERS[0][1];
+  for (const [v, n] of TIERS) if (worth >= v) name = n;
+  return name;
+}
+function netWorth() {
+  return S.cash + S.products.reduce((a, p) => a + p.revenue * .35, 0) + S.fans * 4
+       + S.rivals.filter(r => r.owned).reduce((a, r) => a + r.value, 0);
+}
+function gameDate() {
+  const d = new Date(START_DATE.getTime());
+  d.setDate(d.getDate() + S.day);
+  return d;
+}
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function dateLabel() { const d = gameDate(); return MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
+function fullDate() { const d = gameDate(); return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
+function office() { return OFFICES[S.officeLevel]; }
+function deskCapacity() { return office().desks; }
+
+/* ------------------------------ save / load ------------------------------ */
+let saveTimer = 0;
+function save() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* private mode */ }
+}
+function queueSave() { clearTimeout(saveTimer); saveTimer = setTimeout(save, 600); }
+function load() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || typeof parsed.cash !== 'number') return null;
+    /* merge with a fresh state so saves from older builds still boot */
+    return Object.assign(freshState(), parsed);
+  } catch (e) { return null; }
+}
+function wipeSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+
+/* ==========================================================================
+   3. PEOPLE
+   ========================================================================== */
+function makeCandidate(levelBias = 0) {
+  const role = pick(Object.keys(ROLES));
+  const country = pick(COUNTRIES);
+  const exp = irnd(0, 18);
+  const potential = clamp(rnd(1.6, 9.4) + levelBias * .55 + exp * .12, 1, 10);
+  const skill = Math.round(potential * 10) / 10;
+  const traits = [];
+  const tc = Math.random() < .55 ? 1 : (Math.random() < .35 ? 2 : 0);
+  const pool = TRAITS.slice();
+  for (let i = 0; i < tc; i++) traits.push(pool.splice(irnd(0, pool.length - 1), 1)[0].n);
+  let salary = Math.round((420 + Math.pow(skill, 2.35) * 47 + exp * 130) * country.m / 50) * 50;
+  if (traits.includes('Expensive')) salary = Math.round(salary * 1.25 / 50) * 50;
+  return {
+    id: uid(), name: pick(FIRST) + ' ' + pick(LAST), role, country: country.n, flag: country.f,
+    age: clamp(20 + exp + irnd(0, 9), 20, 62), exp, skill, salary, traits,
+    energy: 100, hiredDay: null, desk: -1, xp: 0,
+  };
+}
+function refreshCandidates(n = 6) {
+  S.candidates = [];
+  for (let i = 0; i < n; i++) S.candidates.push(makeCandidate(S.officeLevel));
+  S.candidateSeed = S.day;
+  ui.candIndex = 0;
+}
+function traitObj(n) { return TRAITS.find(t => t.n === n) || { n, good: true, fx: '', v: 0, d: '' }; }
+function traitMult(emp, fx) {
+  let m = 1;
+  for (const t of emp.traits) { const T = traitObj(t); if (T.fx === fx) m += T.v; }
+  return m;
+}
+function empOutput(emp) {
+  const energyF = clamp(.45 + emp.energy / 145, .45, 1.08);
+  return emp.skill * energyF * traitMult(emp, 'work');
+}
+function teamBonus() {
+  let b = 1;
+  for (const e of S.employees) b += (traitMult(e, 'team') - 1);
+  return clamp(b, .7, 1.6);
+}
+function payroll() { return S.employees.reduce((a, e) => a + e.salary, 0); }
+function monthlyBurn() { return payroll() + Math.round(2200 * Math.pow(2.35, S.officeLevel)); }
+function runwayMonths() {
+  const burn = monthlyBurn();
+  const income = S.revenueLog.slice(-30).reduce((a, b) => a + b, 0);
+  const net = burn - income;
+  if (net <= 0) return Infinity;
+  return S.cash / net;
+}
+function runwayChip() {
+  const r = runwayMonths();
+  if (r === Infinity) return '<span style="color:var(--green);font-weight:700">profitable</span>';
+  const col = r < 2 ? 'var(--red)' : r < 5 ? 'var(--amber)' : 'var(--green)';
+  return '<span style="color:' + col + ';font-weight:700">' + (r < 10 ? r.toFixed(1) : Math.round(r)) + ' months runway</span>';
+}
+
+function hireCandidate(c) {
+  if (S.employees.length >= deskCapacity()) { toast('bad', '🚫 No free desks', 'Upgrade the office to seat more people.'); return false; }
+  if (S.cash < c.salary) { toast('bad', '💸 Not enough cash', 'You cannot cover the first month of salary.'); return false; }
+  c.hiredDay = S.day;
+  c.desk = S.employees.length;
+  S.employees.push(c);
+  S.candidates = S.candidates.filter(x => x.id !== c.id);
+  S.stats.hires++;
+  spend(c.salary, 'signing');
+  toast('good', '🎉 ' + c.name + ' joined!', ROLES[c.role].label + ' · ' + money(c.salary) + '/mo');
+  sfx('hire');
+  queueSave();
+  return true;
+}
+function fireEmployee(id) {
+  const i = S.employees.findIndex(e => e.id === id);
+  if (i < 0) return;
+  const e = S.employees[i];
+  const sev = Math.round(e.salary * 1.5);
+  S.employees.splice(i, 1);
+  S.employees.forEach((x, k) => x.desk = k);
+  spend(sev, 'severance');
+  toast('info', '👋 ' + e.name + ' let go', 'Severance ' + money(sev));
+  queueSave();
+}
+
+/* ==========================================================================
+   4. ECONOMY
+   ========================================================================== */
+function earn(n, reason) { S.cash += n; S.stats.revenue += n; }
+function spend(n, reason) { S.cash -= n; S.stats.spend += n; }
+
+/* -------- project math (pure: used live by the builder UI) -------- */
+function specTotals(catId, specs) {
+  const cat = CATEGORIES[catId];
+  let cost = cat.baseCost, days = cat.baseDays, design = 0, tech = 0, unit = 0;
+  for (const part of cat.parts) {
+    const opt = part.opts[specs[part.key] ?? 0];
+    if (!opt) continue;
+    cost += opt.c; days += opt.d; design += opt.dz; tech += opt.tz; unit += opt.u;
+  }
+  /* a bigger team ships faster */
+  const crew = S.employees.length;
+  const speedF = clamp(1.25 - crew * .045, .55, 1.25) * (S.officeLevel >= 2 ? .92 : 1);
+  return {
+    cost: Math.round(cost), days: Math.max(5, Math.round(days * speedF)),
+    design, tech, unit: Math.round(unit),
+    points: Math.round(design * cat.wD + tech * cat.wT),
+  };
+}
+/* What the market considers "a good product" in a given year. It roughly doubles
+   every two years — the same cadence the component tiers unlock on — then flattens
+   once the tech tree runs out, so late-game mastery can still score a 10. */
+function expectedPoints() {
+  const yrs = gameDate().getFullYear() - 2002;
+  return Math.min(132, 44 * Math.pow(1.38, yrs));
+}
+
+/* A component tier belongs to an era: you cannot buy 2010 silicon in 2003, however
+   experienced the company is. */
+function optionEra(req) { return 2002 + (req - 1) * 2; }
+function optionLocked(op) {
+  return op.req > techLevel() || gameDate().getFullYear() < optionEra(op.req);
+}
+
+/* Team quality is a RATE, not a total: a project that drags on for a year does
+   not become better than the same team's month-long sprint. */
+const TEAM_K = 8;
+function teamRates() {
+  const tb = teamBonus();
+  let d = 0, t = 0;
+  for (const e of S.employees) {
+    const out = empOutput(e) * tb;
+    if (e.role === 'design') d += out * .19 * traitMult(e, 'design');
+    if (e.role === 'engineer') t += out * .19 * traitMult(e, 'tech');
+    if (e.role === 'ops') { d += out * .04; t += out * .04; }
+  }
+  return { d, t };
+}
+function teamPoints(rateD, rateT) {
+  let tD = rateD * TEAM_K, tT = rateT * TEAM_K;
+  const cap = expectedPoints() * .75, tot = tD + tT;
+  if (tot > cap && tot > 0) { const f = cap / tot; tD *= f; tT *= f; }
+  return { tD, tT };
+}
+function suggestedPrice(catId, specs) {
+  const t = specTotals(catId, specs);
+  const cat = CATEGORIES[catId];
+  const base = cat.priceHint > 1.5
+    ? t.unit * 2.2 + t.points * 1.6
+    : 4 + t.points * 1.35;
+  return Math.max(1, Math.round(base));
+}
+function priceRange(catId, specs) {
+  const s = suggestedPrice(catId, specs);
+  return { min: Math.max(1, Math.round(s * .45)), max: Math.round(s * 2.1), sug: s };
+}
+
+function startProject(catId, name, specs, price) {
+  const t = specTotals(catId, specs);
+  if (S.cash < t.cost) { toast('bad', '💸 Cannot fund it', 'Development needs ' + money(t.cost)); return false; }
+  spend(t.cost, 'r&d');
+  S.project = {
+    id: uid(), cat: catId, name: name, specs: { ...specs }, price,
+    cost: t.cost, unit: t.unit, totalDays: t.days, daysDone: 0,
+    specDesign: t.design, specTech: t.tech,
+    teamDesign: 0, teamTech: 0, bugs: 0, workDone: 0,
+    workNeeded: t.days * dailyWork(), idealCrew: Math.max(1, (t.design + t.tech) / 26), startDay: S.day,
+  };
+  toast('money', '🛠️ "' + name + '" in development', money(t.cost) + ' invested · ~' + t.days + ' days');
+  sfx('start');
+  queueSave();
+  return true;
+}
+const PHASES = [
+  [0,   'PREPARING'], [.18, 'DESIGN'], [.42, 'ENGINEERING'],
+  [.68, 'QA & POLISH'], [.88, 'PRE-LAUNCH'], [1,  'READY TO SHIP'],
+];
+function projectPhase(p) {
+  const r = p.workDone / p.workNeeded;
+  let label = PHASES[0][1];
+  for (const [t, n] of PHASES) if (r >= t) label = n;
+  return label;
+}
+function projectPct(p) { return clamp(p.workDone / p.workNeeded, 0, 1); }
+
+function advanceProject() {
+  const p = S.project;
+  if (!p) return;
+  const rates = teamRates();
+  const work = dailyWork();
+  for (const e of S.employees) {
+    e.energy = clamp(e.energy - rnd(.35, 1.15) * traitMult(e, 'stam'), 0, 100);
+    e.xp += .6 * traitMult(e, 'grow');
+    if (e.xp > 100) { e.xp = 0; e.skill = Math.round(Math.min(10, e.skill + .1) * 10) / 10; }
+  }
+  p.workDone += work;
+  p.teamDesign += rates.d;
+  p.teamTech += rates.t;
+  p.daysDone++;
+  /* a scope your crew cannot cover ships full of bugs */
+  const ideal = p.idealCrew || Math.max(1, (p.specDesign + p.specTech) / 26);
+  if (S.employees.length < ideal) p.bugs += (ideal - S.employees.length) * .2;
+
+  if (p.workDone >= p.workNeeded) {
+    p.workDone = p.workNeeded;
+    S.speed = 0;
+    openScreen('launch');
+    sfx('done');
+  }
+}
+
+/* -------- launch & sales -------- */
+function ratingParts(p) {
+  const cat = CATEGORIES[p.cat];
+  const dd = Math.max(1, p.daysDone);
+  const { tD, tT } = teamPoints(p.teamDesign / dd, p.teamTech / dd);
+  const exp = expectedPoints();
+  const total = (p.specDesign + tD) * cat.wD + (p.specTech + tT) * cat.wT;
+  return { tD, tT, exp, total };
+}
+function computeRating(p, noJitter) {
+  const { total, exp } = ratingParts(p);
+  let ratio = total / exp;
+  ratio *= clamp(1 - p.bugs * .006, .5, 1);
+  if (S.officeLevel >= 3) ratio *= 1.06;
+  let r = 1 + 9 * (ratio - .38) / (1.42 - .38);
+  if (!noJitter) r += rnd(-.4, .4);
+  return clamp(Math.round(r * 10) / 10, 0.4, 10);
+}
+function launchProject(marketingSpend) {
+  const p = S.project;
+  if (!p) return;
+  if (marketingSpend > 0) spend(marketingSpend, 'marketing');
+  const cat = CATEGORIES[p.cat];
+  const rating = computeRating(p);
+  const hypeAdd = clamp(Math.sqrt(marketingSpend / 9000) * .18, 0, 2.2);
+  S.hype = clamp(S.hype + hypeAdd, 0, 4);
+
+  const prod = {
+    id: uid(), name: p.name, cat: p.cat, rating, price: p.price, unit: p.unit,
+    launchDay: S.day, devCost: p.cost, marketing: marketingSpend,
+    units: 0, revenue: 0, profit: -p.cost - marketingSpend, active: true,
+    hype: S.hype, history: [], peak: 0, specs: p.specs,
+  };
+  S.products.unshift(prod);
+  S.stats.launches++;
+  S.stats.best = Math.max(S.stats.best, rating);
+  S.project = null;
+
+  /* press reviews */
+  const band = rating >= 8.5 ? 'great' : rating >= 6.8 ? 'good' : rating >= 4.5 ? 'mid' : 'bad';
+  for (let i = 0; i < 3; i++) {
+    const score = clamp(Math.round((rating + rnd(-.9, .9)) * 10) / 10, .5, 10);
+    S.reviews.unshift({
+      id: uid(), by: pick(REVIEWERS), product: prod.name, score,
+      text: pick(REVIEW_LINES[band]).replace('{cat}', cat.name.toLowerCase()), day: S.day,
+    });
+  }
+  S.reviews = S.reviews.slice(0, 24);
+
+  const fanGain = Math.round(rating * rating * 24 * (1 + S.hype) * (S.officeLevel >= 5 ? 1.2 : 1));
+  S.fans += fanGain;
+  queueSave();
+  return { prod, rating, fanGain };
+}
+
+function dailySales() {
+  let dayRevenue = 0;
+  for (const prod of S.products) {
+    if (!prod.active) continue;
+    const age = S.day - prod.launchDay;
+    const cat = CATEGORIES[prod.cat];
+    if (age > 720) { prod.active = false; continue; }
+
+    /* even a mediocre product finds a few buyers — the curve has a floor */
+    const appeal = .06 + .94 * Math.pow(clamp(prod.rating / 10, .04, 1), 1.7);
+    const value = prod.unit * 1.6 + (prod.rating * (cat.priceHint > 1.5 ? 42 : 9)) + 6;
+    const priceF = clamp(1.65 - prod.price / (value * 1.05), .03, 1.7);
+    const reach = 1 + Math.sqrt(Math.max(0, S.fans)) / 200 + S.share / 120;
+    const hypeF = 1 + S.hype * .7;
+    const market = 420 * cat.market * reach;
+
+    /* launch ramp then a long decay tail */
+    const ramp = age < 10 ? .45 + age * .055 : 1;
+    const decay = Math.exp(-age / (58 + prod.rating * 11));
+    let units = market * appeal * priceF * hypeF * ramp * decay;
+    units *= rnd(.85, 1.15);
+    if (units < 0 || !isFinite(units)) units = 0;
+
+    const margin = prod.price - prod.unit;
+    const rev = units * margin;
+    prod.units += units;
+    prod.revenue += Math.max(0, units * prod.price);
+    prod.profit += rev;
+    prod.peak = Math.max(prod.peak, units);
+    prod.history.push(Math.round(rev));
+    if (prod.history.length > 160) prod.history.shift();
+    dayRevenue += rev;
+    S.stats.units += units;
+
+    /* word of mouth */
+    S.fans += units * (prod.rating / 10) * .012 * (S.officeLevel >= 5 ? 1.2 : 1);
+    if (units < 3 && age > 40) prod.active = false;
+  }
+  if (dayRevenue !== 0) earn(dayRevenue, 'sales');
+  S.revenueLog.push(Math.round(dayRevenue));
+  if (S.revenueLog.length > 400) S.revenueLog.shift();
+  return dayRevenue;
+}
+
+function monthlyBooks() {
+  const pay = payroll();
+  if (pay > 0) spend(pay, 'payroll');
+  const rent = Math.round(2200 * Math.pow(2.35, S.officeLevel));
+  spend(rent, 'rent');
+  let sub = 0;
+  for (const r of S.rivals) if (r.owned) sub += Math.round(r.value * .022);
+  if (sub) earn(sub, 'subsidiaries');
+  toast('info', '📅 ' + dateLabel() + ' books', 'Payroll ' + money(pay) + ' · rent ' + money(rent) + (sub ? ' · subs +' + money(sub) : ''));
+  if (S.cash < 0) {
+    toast('bad', '⚠️ You are in the red', 'Cut costs or ship something fast.');
+    if (S.cash < -250000) gameOver();
+  }
+  /* rivals grow; market share is your slice of total industry revenue */
+  const days = Math.min(180, S.revenueLog.length) || 1;
+  const mineYr = S.revenueLog.slice(-180).reduce((a, b) => a + b, 0) * (365 / days);
+  let rivalRev = 0, subsRev = 0;
+  for (const r of S.rivals) {
+    if (r.owned) { subsRev += r.value * .22; continue; }
+    r.value = Math.round(r.value * rnd(1.001, 1.007));
+    r.strength = clamp(r.strength + rnd(-.08, .14), 3, 9.9);
+    rivalRev += r.value * .22;
+  }
+  const ours = Math.max(0, mineYr) + subsRev;
+  const target = ours / Math.max(1, ours + rivalRev) * 100;
+  S.share = clamp(lerp(S.share, target, .3), .3, 97);
+  for (const r of S.rivals) {
+    if (r.owned) { r.share = 0; continue; }
+    r.share = (1 - S.share / 100) * (r.value * .22) / Math.max(1, rivalRev) * 100;
+  }
+  /* new candidates every month */
+  refreshCandidates(6);
+  $('#hireBadge').hidden = false;
+  queueSave();
+}
+
+function acquire(id) {
+  const r = S.rivals.find(x => x.id === id);
+  if (!r || r.owned) return;
+  const price = Math.round(r.value * 1.35);
+  if (S.cash < price) { toast('bad', '💸 Not enough cash', 'You need ' + money(price)); return; }
+  spend(price, 'acquisition');
+  r.owned = true;
+  S.stats.acquisitions++;
+  S.share = clamp(S.share + r.share, 0, 96);
+  r.share = 0;
+  S.fans += Math.round(r.value / 90);
+  toast('good', '🤝 Acquired ' + r.name, 'For ' + money(price) + ' · +' + money(Math.round(r.value * .022)) + '/mo');
+  sfx('cash');
+  confetti(60);
+  queueSave();
+  render();
+}
+
+function upgradeOffice() {
+  const next = OFFICES[S.officeLevel + 1];
+  if (!next) { toast('info', '🏆 Top floor reached', 'There is nothing bigger to buy.'); return; }
+  if (S.cash < next.cost) { toast('bad', '💸 Cannot afford it', next.name + ' costs ' + money(next.cost)); return; }
+  spend(next.cost, 'office');
+  S.officeLevel++;
+  buildOfficeLayout();
+  toast('good', '🏢 Moved into ' + next.name, next.perk);
+  sfx('cash');
+  confetti(40);
+  queueSave();
+  render();
+}
+
+function gameOver() {
+  S.speed = 0;
+  openScreen('gameover');
+}
+
+/* ==========================================================================
+   5. MAIN LOOP
+   ========================================================================== */
+let acc = 0, lastT = 0;
+function tickDay() {
+  S.day++;
+  const d = gameDate();
+
+  if (S.project) advanceProject();
+  dailySales();
+
+  /* hype decays; marketers keep it alive */
+  let mk = 0;
+  for (const e of S.employees) if (e.role === 'marketer') mk += empOutput(e) * traitMult(e, 'hype');
+  const resist = S.officeLevel >= 4 ? .987 : .978;
+  S.hype = clamp(S.hype * resist + mk * .0016, 0, 4);
+
+  /* energy recovery when idle */
+  for (const e of S.employees) {
+    e.energy = clamp(e.energy + (S.project ? .55 : rnd(1.6, 3.2)), 0, 100);
+    if (e.energy < 12 && Math.random() < .004) {
+      toast('bad', '😩 ' + e.name + ' is burnt out', 'Output is way down — give the team a break.');
+      e.energy = 26;
+    }
+  }
+  /* campaign expiry */
+  S.campaigns = S.campaigns.filter(c => S.day - c.start < c.days);
+
+  if (d.getDate() === 1 && S.day > 0) monthlyBooks();
+  if (S.day % 7 === 0) queueSave();
+}
+
+function frame(t) {
+  if (!lastT) lastT = t;
+  const dt = Math.min(250, t - lastT);
+  lastT = t;
+  if (S && S.speed > 0 && !modalBlocksTime()) {
+    acc += dt * S.speed;
+    let guard = 0;
+    while (acc >= MS_PER_DAY && guard++ < 20) { acc -= MS_PER_DAY; tickDay(); }
+    renderHUD();
+  }
+  drawOffice(t);
+  requestAnimationFrame(frame);
+}
+function modalBlocksTime() {
+  return $('#modalRoot').classList.contains('on');
+}
+
+/* ==========================================================================
+   6. ISOMETRIC OFFICE RENDERER
+   ========================================================================== */
+const cv = $('#office');
+const ctx = cv.getContext('2d');
+const TW = 64, TH = 32;                    /* tile width / height in px at zoom 1 */
+let cam = { x: 0, y: 0, zoom: 1 };
+let LAYOUT = null;
+let particles = [];
+let hoverEnt = null;
+
+function resizeCanvas() {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const r = cv.getBoundingClientRect();
+  cv.width = Math.max(1, Math.round(r.width * dpr));
+  cv.height = Math.max(1, Math.round(r.height * dpr));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  cv._w = r.width; cv._h = r.height;
+}
+window.addEventListener('resize', () => { resizeCanvas(); });
+
+/* -------- layout generation -------- */
+function buildOfficeLayout() {
+  const of = office();
+  const rng = seeded('office' + S.officeLevel + S.company);
+  const desks = [];
+  const cols = Math.max(2, Math.floor((of.w - 1) / 2));
+  let i = 0;
+  outer:
+  for (let row = 1; row < of.h - 1; row += 2) {
+    for (let c = 0; c < cols; c++) {
+      const x = 1 + c * 2;
+      if (x >= of.w - 1) continue;
+      desks.push({ x: x + .08, y: row + .1, flip: c % 2 === 1 });
+      if (++i >= of.desks) break outer;
+    }
+  }
+  const props = [];
+  const lastX = of.w - 1.2, lastY = of.h - 1.2;
+  props.push({ t: 'plant', x: .25, y: .25 });
+  props.push({ t: 'plant', x: lastX, y: .3 });
+  props.push({ t: 'coffee', x: .3, y: of.h - 2.1 });
+  if (S.officeLevel >= 1) {
+    props.push({ t: 'sofa', x: lastX - .4, y: of.h - 2.6 });
+    props.push({ t: 'cooler', x: of.w - 1.3, y: 1.6 });
+    props.push({ t: 'plant', x: .3, y: of.h - 1.2 });
+  }
+  if (S.officeLevel >= 2) {
+    props.push({ t: 'server', x: of.w - 1.25, y: of.h - 4.4 });
+    props.push({ t: 'board', x: 2.2, y: .12 });
+  }
+  if (S.officeLevel >= 3) {
+    props.push({ t: 'arcade', x: of.w - 1.25, y: 3.5 });
+    props.push({ t: 'meeting', x: of.w - 3.4, y: of.h - 2.6 });
+    props.push({ t: 'plant', x: lastX, y: of.h - 1.3 });
+  }
+  if (S.officeLevel >= 4) {
+    props.push({ t: 'trophy', x: 4.6, y: .12 });
+    props.push({ t: 'arcade', x: of.w - 1.25, y: 5.2 });
+  }
+  if (S.officeLevel >= 5) {
+    props.push({ t: 'statue', x: 1.2, y: of.h - 3.4 });
+    props.push({ t: 'trophy', x: 6.2, y: .12 });
+  }
+  const rugs = [];
+  for (let r = 0; r < of.rugs; r++) {
+    rugs.push({ x: 1 + r * 3.2, y: of.h - 1.9, w: 2.4, h: 1.2 });
+  }
+  LAYOUT = { w: of.w, h: of.h, desks, props, rugs, rng };
+}
+
+/* -------- projection -------- */
+function projBase() {
+  const z = cam.zoom;
+  const w = LAYOUT.w, h = LAYOUT.h;
+  const ox = cv._w / 2 - ((w / 2 - h / 2) * TW / 2) * z + cam.x;
+  const oy = cv._h / 2 - ((w / 2 + h / 2) * TH / 2) * z + cam.y + 34 * z;
+  return { ox, oy, z };
+}
+let P = { ox: 0, oy: 0, z: 1 };
+function iso(x, y, zh = 0) {
+  return [P.ox + (x - y) * (TW / 2) * P.z, P.oy + (x + y) * (TH / 2) * P.z - zh * P.z];
+}
+function poly(pts, fill, stroke, lw) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = (lw || 1) * P.z; ctx.stroke(); }
+}
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  r = clamp(Math.round(r + amt), 0, 255); g = clamp(Math.round(g + amt), 0, 255); b = clamp(Math.round(b + amt), 0, 255);
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+/* a cuboid anchored at tile (x,y) with footprint sx,sy tiles and height hz px */
+function box(x, y, z, sx, sy, hz, color, opts = {}) {
+  const top = color, left = shade(color, -34), right = shade(color, -66);
+  const z1 = z + hz;
+  poly([iso(x, y + sy, z), iso(x + sx, y + sy, z), iso(x + sx, y + sy, z1), iso(x, y + sy, z1)], opts.left || left);
+  poly([iso(x + sx, y, z), iso(x + sx, y + sy, z), iso(x + sx, y + sy, z1), iso(x + sx, y, z1)], opts.right || right);
+  poly([iso(x, y, z1), iso(x + sx, y, z1), iso(x + sx, y + sy, z1), iso(x, y + sy, z1)], opts.top || top,
+    opts.outline || null, opts.lw);
+}
+function shadowBlob(x, y, sx, sy) {
+  ctx.save();
+  ctx.globalAlpha = .18;
+  poly([iso(x - .06, y - .06, 0), iso(x + sx + .06, y - .06, 0), iso(x + sx + .06, y + sy + .06, 0), iso(x - .06, y + sy + .06, 0)], '#000');
+  ctx.restore();
+}
+
+/* -------- scene pieces -------- */
+function drawFloor() {
+  const w = LAYOUT.w, h = LAYOUT.h;
+  const woodA = '#c89b6a', woodB = '#bd8f5e';
+  const tileA = '#e4e7ee', tileB = '#d6dae4';
+  const lux = S.officeLevel >= 4;
+  for (let x = 0; x < w; x++) {
+    for (let y = 0; y < h; y++) {
+      const alt = (x + y) % 2 === 0;
+      const c = lux ? (alt ? tileA : tileB) : (alt ? woodA : woodB);
+      poly([iso(x, y), iso(x + 1, y), iso(x + 1, y + 1), iso(x, y + 1)], c, 'rgba(0,0,0,.07)', 1);
+    }
+  }
+  /* rugs */
+  for (const r of LAYOUT.rugs) {
+    ctx.save();
+    ctx.globalAlpha = .85;
+    poly([iso(r.x, r.y), iso(r.x + r.w, r.y), iso(r.x + r.w, r.y + r.h), iso(r.x, r.y + r.h)],
+      S.officeLevel >= 3 ? '#2f6f63' : '#7b4a52', 'rgba(255,255,255,.16)', 2);
+    ctx.restore();
+  }
+}
+function drawWalls() {
+  const w = LAYOUT.w, h = LAYOUT.h, WH = 96;
+  const wallC = S.officeLevel >= 4 ? '#3a4668' : '#e6ddcd';
+  const wallDark = S.officeLevel >= 4 ? '#2d3755' : '#d6cbb6';
+  /* wall along y=0 (right-facing) */
+  poly([iso(0, 0, 0), iso(w, 0, 0), iso(w, 0, WH), iso(0, 0, WH)], wallC);
+  /* wall along x=0 (left-facing) */
+  poly([iso(0, 0, 0), iso(0, h, 0), iso(0, h, WH), iso(0, 0, WH)], wallDark);
+  /* skirting */
+  poly([iso(0, 0, 0), iso(w, 0, 0), iso(w, 0, 9), iso(0, 0, 9)], 'rgba(0,0,0,.18)');
+  poly([iso(0, 0, 0), iso(0, h, 0), iso(0, h, 9), iso(0, 0, 9)], 'rgba(0,0,0,.26)');
+
+  /* windows with a skyline */
+  const nightish = false;
+  for (let x = 1; x < w - 1; x += 2.6) {
+    winPane(x, x + 1.6, 'y', WH);
+  }
+  for (let y = 1.4; y < h - 1; y += 2.6) {
+    winPane(y, y + 1.5, 'x', WH);
+  }
+}
+function winPane(a, b, axis, WH) {
+  const z0 = 32, z1 = WH - 16;
+  const pts = axis === 'y'
+    ? [iso(a, 0, z0), iso(b, 0, z0), iso(b, 0, z1), iso(a, 0, z1)]
+    : [iso(0, a, z0), iso(0, b, z0), iso(0, b, z1), iso(0, a, z1)];
+  /* sky */
+  const g = ctx.createLinearGradient(pts[0][0], pts[2][1], pts[0][0], pts[0][1]);
+  const hr = gameDate().getMonth();
+  g.addColorStop(0, '#9fd8f5'); g.addColorStop(.6, '#cfeaf8'); g.addColorStop(1, '#f2e2c4');
+  poly(pts, g);
+  /* skyline silhouettes */
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < 4; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.closePath(); ctx.clip();
+  ctx.globalAlpha = .45;
+  const rng = seeded('sky' + a + axis + S.officeLevel);
+  for (let i = 0; i < 7; i++) {
+    const t0 = a + (b - a) * (i / 7), t1 = t0 + (b - a) / 8;
+    const hgt = z0 + (z1 - z0) * (.2 + rng() * .55);
+    const q = axis === 'y'
+      ? [iso(t0, 0, z0), iso(t1, 0, z0), iso(t1, 0, hgt), iso(t0, 0, hgt)]
+      : [iso(0, t0, z0), iso(0, t1, z0), iso(0, t1, hgt), iso(0, t0, hgt)];
+    poly(q, '#5d7fa8');
+  }
+  ctx.restore();
+  /* frame + glare */
+  poly(pts, null, 'rgba(255,255,255,.75)', 3);
+  ctx.save(); ctx.globalAlpha = .22;
+  const mid = axis === 'y'
+    ? [iso((a + b) / 2, 0, z0), iso((a + b) / 2 + .06, 0, z0), iso((a + b) / 2 + .06, 0, z1), iso((a + b) / 2, 0, z1)]
+    : [iso(0, (a + b) / 2, z0), iso(0, (a + b) / 2 + .06, z0), iso(0, (a + b) / 2 + .06, z1), iso(0, (a + b) / 2, z1)];
+  poly(mid, '#ffffff');
+  ctx.restore();
+}
+
+/* employee colors */
+const SKINS = ['#f2c9a0', '#e0a87c', '#c4835a', '#8d5a3b', '#6a4230', '#f7d9bd'];
+const HAIRS = ['#2b1d16', '#6b4226', '#c98c3c', '#d9d2cb', '#1b1b22', '#8a3b2e', '#4a3f7a'];
+const SHIRTS = { design: '#a77bff', engineer: '#35d0e8', marketer: '#ff6fae', ops: '#3ddc90' };
+
+function drawDesk(d, emp, t) {
+  const x = d.x, y = d.y;
+  shadowBlob(x, y, .95, .68);
+  /* legs + top */
+  box(x + .06, y + .07, 0, .09, .09, 26, '#8b8f9c');
+  box(x + .8, y + .52, 0, .09, .09, 26, '#8b8f9c');
+  box(x, y, 26, .95, .68, 5, '#e8e2d6');
+  const DT = 31;                                   /* desk surface height */
+
+  /* monitor: foot, neck, panel */
+  const mx = x + .13, my = y + .13;
+  box(mx, my + .14, DT, .11, .12, 4, '#4a4f5e');
+  box(mx + .03, my + .17, DT + 4, .04, .06, 5, '#5a6072');
+  box(mx, my, DT + 7, .07, .4, 16, '#31364a');
+  const on = !!emp;
+  const glow = on ? (Math.sin(t / 220 + x * 3) * .5 + .5) : 0;
+  const scr = !on ? '#20242f' : shade(S.project ? '#2a6fd6' : '#1f8f6a', Math.round(glow * 24));
+  const FX = mx + .0705;                            /* the camera-facing panel plane */
+  const sz0 = DT + 9, sz1 = DT + 21;
+  poly([iso(FX, my + .03, sz0), iso(FX, my + .37, sz0), iso(FX, my + .37, sz1), iso(FX, my + .03, sz1)], scr);
+  if (on) {
+    /* text lines on the screen */
+    ctx.save(); ctx.globalAlpha = .55;
+    for (let i = 0; i < 3; i++) {
+      const zz = sz1 - 3 - i * 4;
+      const len = .07 + (Math.sin(t / 380 + i * 1.7 + x) * .5 + .5) * .18;
+      poly([iso(FX + .002, my + .06, zz), iso(FX + .002, my + .06 + len, zz),
+            iso(FX + .002, my + .06 + len, zz + 2), iso(FX + .002, my + .06, zz + 2)], '#dfeeff');
+    }
+    ctx.restore();
+    /* screen spill onto the desk */
+    ctx.save(); ctx.globalAlpha = .10 + glow * .10;
+    poly([iso(FX, my - .1, DT), iso(FX + .55, my - .1, DT), iso(FX + .55, my + .5, DT), iso(FX, my + .5, DT)], scr);
+    ctx.restore();
+  }
+  /* keyboard + mug */
+  box(x + .48, y + .18, DT, .17, .34, 3, '#cfd3dd');
+  box(x + .56, y + .06, DT, .09, .09, 8, '#e05a4e');
+
+  /* chair */
+  const cx0 = x + .95, cy0 = y + .17;
+  box(cx0, cy0, 0, .34, .34, 13, '#3c4459');
+  box(cx0 + .29, cy0, 13, .06, .34, 19, '#333b52');
+
+  if (emp) {
+    const bob = S.project ? Math.sin(t / 150 + emp.desk * 1.7) * 1.5 : Math.sin(t / 520 + emp.desk) * .6;
+    const rng = seeded(emp.id);
+    const skin = SKINS[Math.floor(rng() * SKINS.length)];
+    const hair = HAIRS[Math.floor(rng() * HAIRS.length)];
+    const shirt = SHIRTS[emp.role] || '#8aa5c4';
+    const tired = emp.energy < 30;
+    const body = tired ? shade(shirt, -46) : shirt;
+    box(cx0 + .03, cy0 + .04, 13 + bob, .26, .26, 18, body);          /* torso  */
+    box(cx0 + .085, cy0 + .095, 31 + bob, .17, .17, 14, skin);        /* head   */
+    box(cx0 + .075, cy0 + .085, 45 + bob, .19, .19, 4, hair);         /* hair   */
+    /* thought bubble */
+    if (S.project && Math.sin(t / 900 + emp.desk * 2.3) > .84) {
+      bubble(cx0 + .17, cy0 + .17, 68 + bob, emp.role === 'design' ? '🎨' : emp.role === 'engineer' ? '💡' : emp.role === 'marketer' ? '📣' : '📋');
+    } else if (tired && Math.sin(t / 700 + emp.desk) > .6) {
+      bubble(cx0 + .17, cy0 + .17, 68 + bob, '💤');
+    }
+  }
+}
+function bubble(x, y, z, emoji) {
+  const [sx, sy] = iso(x, y, z);
+  ctx.save();
+  ctx.globalAlpha = .95;
+  ctx.beginPath();
+  ctx.ellipse(sx, sy, 13 * P.z, 11 * P.z, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.fill();
+  ctx.font = (13 * P.z) + 'px serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, sx, sy + 1 * P.z);
+  ctx.restore();
+}
+
+function drawProp(p, t) {
+  const x = p.x, y = p.y;
+  switch (p.t) {
+    case 'plant':
+      shadowBlob(x, y, .5, .5);
+      box(x + .1, y + .1, 0, .3, .3, 14, '#b4643c');
+      for (let i = 0; i < 4; i++) {
+        const a = i * 1.57 + Math.sin(t / 1400 + x) * .12;
+        box(x + .2 + Math.cos(a) * .1, y + .2 + Math.sin(a) * .1, 14, .12, .12, 22 + i * 4, i % 2 ? '#2f8f52' : '#37a85f');
+      }
+      break;
+    case 'coffee':
+      shadowBlob(x, y, .6, .5);
+      box(x, y, 0, .55, .45, 30, '#5a6274');
+      box(x + .08, y + .06, 30, .38, .32, 20, '#2d3444');
+      box(x + .14, y + .12, 50, .26, .2, 5, '#c0392b');
+      break;
+    case 'cooler':
+      shadowBlob(x, y, .45, .45);
+      box(x, y, 0, .4, .4, 34, '#dfe6f0');
+      box(x + .04, y + .04, 34, .32, .32, 22, '#7fc9e8');
+      break;
+    case 'sofa':
+      shadowBlob(x, y, 1.5, .8);
+      box(x, y, 0, 1.4, .7, 16, '#3f5470');
+      box(x, y, 16, 1.4, .18, 22, '#4b6079');
+      box(x, y + .2, 16, .3, .5, 9, '#5a7292');
+      box(x + 1.05, y + .2, 16, .3, .5, 9, '#5a7292');
+      break;
+    case 'server':
+      shadowBlob(x, y, .5, .9);
+      box(x, y, 0, .45, .85, 78, '#20263a');
+      for (let i = 0; i < 6; i++) {
+        const blink = Math.sin(t / 180 + i * 2.1) > .1 ? '#3ddc90' : '#1c6d4b';
+        poly([iso(x + .46, y + .1, 12 + i * 11), iso(x + .46, y + .2, 12 + i * 11), iso(x + .46, y + .2, 16 + i * 11), iso(x + .46, y + .1, 16 + i * 11)], blink);
+      }
+      break;
+    case 'board':
+      box(x, y + .04, 34, .06, 1.5, 46, '#f4f6fa');
+      ctx.save(); ctx.globalAlpha = .5;
+      for (let i = 0; i < 3; i++) {
+        const z = 70 - i * 10;
+        poly([iso(x - .01, y + .2 + i * .1, z), iso(x - .01, y + .9 - i * .15, z), iso(x - .01, y + .9 - i * .15, z + 3), iso(x - .01, y + .2 + i * .1, z + 3)], i === 1 ? '#e0563c' : '#3a7fd5');
+      }
+      ctx.restore();
+      break;
+    case 'arcade':
+      shadowBlob(x, y, .5, .6);
+      box(x, y, 0, .45, .6, 64, '#31255e');
+      poly([iso(x + .46, y + .08, 36), iso(x + .46, y + .52, 36), iso(x + .46, y + .52, 58), iso(x + .46, y + .08, 58)],
+        Math.sin(t / 300) > 0 ? '#ff6fae' : '#35d0e8');
+      box(x + .02, y + .02, 64, .41, .56, 6, '#432f7d');
+      break;
+    case 'meeting':
+      shadowBlob(x, y, 1.7, 1.1);
+      box(x + .7, y + .45, 0, .2, .2, 26, '#7a7f8e');
+      box(x, y, 26, 1.6, 1.1, 7, '#d8cdb8');
+      for (let i = 0; i < 4; i++) {
+        const cx2 = x + (i % 2) * 1.35 - .25, cy2 = y + Math.floor(i / 2) * .85 - .1;
+        box(cx2, cy2, 0, .3, .3, 18, '#46506a');
+      }
+      break;
+    case 'trophy':
+      box(x, y + .5, 34, .1, .3, 6, '#caa34a');
+      box(x + .02, y + .58, 40, .06, .14, 14, '#ffd766');
+      break;
+    case 'statue':
+      shadowBlob(x, y, .6, .6);
+      box(x, y, 0, .5, .5, 14, '#3b4562');
+      box(x + .12, y + .12, 14, .26, .26, 52, '#c9ccd6');
+      box(x + .06, y + .06, 66, .38, .38, 8, '#ffd766');
+      break;
+  }
+}
+
+function drawOffice(t) {
+  if (!S || !LAYOUT) return;
+  if (!cv._w) resizeCanvas();
+  P = projBase();
+  const W = cv._w, H = cv._h;
+  /* backdrop */
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#101a35'); g.addColorStop(1, '#070b16');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.globalAlpha = .5;
+  const rg = ctx.createRadialGradient(W / 2, H * .38, 10, W / 2, H * .38, Math.max(W, H) * .62);
+  rg.addColorStop(0, 'rgba(90,130,220,.28)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+
+  drawFloor();
+  drawWalls();
+
+  /* depth-sorted entities */
+  const ents = [];
+  LAYOUT.desks.forEach((d, i) => ents.push({ d: d.x + d.y, f: () => drawDesk(d, S.employees[i], t) }));
+  LAYOUT.props.forEach(p => ents.push({ d: p.x + p.y + (p.t === 'board' || p.t === 'trophy' ? -3 : 0), f: () => drawProp(p, t) }));
+  ents.sort((a, b) => a.d - b.d);
+  for (const e of ents) e.f();
+
+  drawParticles(t);
+
+  /* vignette */
+  ctx.save();
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)');
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+/* -------- particles -------- */
+function spawnParticle(text, color) {
+  if (!LAYOUT || !LAYOUT.desks.length) return;
+  const d = pick(LAYOUT.desks);
+  particles.push({ x: d.x, y: d.y, z: 80, text, color, life: 1 });
+}
+function drawParticles(t) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.z += .55; p.life -= .009;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    const [sx, sy] = iso(p.x, p.y, p.z);
+    ctx.save();
+    ctx.globalAlpha = clamp(p.life, 0, 1);
+    ctx.font = '800 ' + (13 * P.z) + "px Outfit, sans-serif";
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    ctx.fillText(p.text, sx + 1, sy + 1);
+    ctx.fillStyle = p.color;
+    ctx.fillText(p.text, sx, sy);
+    ctx.restore();
+  }
+}
+
+/* -------- camera controls -------- */
+let drag = null;
+cv.addEventListener('pointerdown', e => {
+  drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y, moved: false };
+  cv.setPointerCapture(e.pointerId);
+  cv.classList.add('dragging');
+});
+cv.addEventListener('pointermove', e => {
+  if (!drag) return;
+  cam.x = drag.cx + (e.clientX - drag.x);
+  cam.y = drag.cy + (e.clientY - drag.y);
+  if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 6) drag.moved = true;
+});
+cv.addEventListener('pointerup', e => {
+  if (drag && !drag.moved) {
+    /* tap on the office = open the team screen if you tapped a person */
+    openScreen('employees');
+  }
+  drag = null; cv.classList.remove('dragging');
+});
+cv.addEventListener('pointercancel', () => { drag = null; cv.classList.remove('dragging'); });
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  cam.zoom = clamp(cam.zoom * (e.deltaY > 0 ? .92 : 1.08), .45, 2.4);
+}, { passive: false });
+$('#zoomIn').onclick = () => cam.zoom = clamp(cam.zoom * 1.15, .45, 2.4);
+$('#zoomOut').onclick = () => cam.zoom = clamp(cam.zoom * .87, .45, 2.4);
+$('#zoomReset').onclick = () => { cam = { x: 0, y: 0, zoom: fitZoom() }; };
+function fitZoom() {
+  if (!LAYOUT || !cv._w) return 1;
+  const needW = (LAYOUT.w + LAYOUT.h) * TW / 2;
+  const needH = (LAYOUT.w + LAYOUT.h) * TH / 2 + 140;
+  return clamp(Math.min((cv._w - 300) / needW, (cv._h - 60) / needH), .45, 2);
+}
+
+/* ==========================================================================
+   7. HUD, TOASTS, FX
+   ========================================================================== */
+function renderHUD() {
+  $('#hudCompany').textContent = S.company;
+  $('#hudTier').textContent = tierName();
+  $('#brandLogo').textContent = (S.company[0] || 'S').toUpperCase();
+  const cashEl = $('#hudCash');
+  cashEl.textContent = money(S.cash);
+  cashEl.style.color = S.cash < 0 ? 'var(--red)' : 'var(--green)';
+  $('#hudFans').textContent = num(S.fans);
+  $('#hudDate').textContent = fullDate();
+  $('#chipLvl').textContent = 'Lv.' + (S.officeLevel + 1) + ' ' + office().name;
+  $('#chipCap').textContent = S.employees.length + '/' + deskCapacity();
+  $('#chipHype').textContent = Math.round(S.hype * 100) + '%';
+  $('#chipShare').textContent = S.share.toFixed(1) + '%';
+
+  const p = S.project;
+  if (p) {
+    const pct = projectPct(p);
+    $('#projPhase').textContent = projectPhase(p);
+    $('#projName').textContent = CATEGORIES[p.cat].icon + ' ' + p.name;
+    $('#projPct').textContent = Math.round(pct * 100) + '%';
+    $('#projBar').style.width = (pct * 100) + '%';
+  } else {
+    $('#projPhase').textContent = 'NO ACTIVE PROJECT';
+    $('#projName').textContent = 'Click to start building something';
+    $('#projPct').textContent = '—';
+    $('#projBar').style.width = '0%';
+  }
+  $$('#speedCtl button').forEach(b => b.classList.toggle('on', +b.dataset.speed === S.speed));
+}
+
+let toastCount = 0;
+function toast(kind, title, sub) {
+  const host = $('#toasts');
+  const el = document.createElement('div');
+  el.className = 'toast ' + kind;
+  const icons = { good: '✅', bad: '⚠️', info: 'ℹ️', money: '💵' };
+  el.innerHTML = '<span class="ti">' + (icons[kind] || '•') + '</span><div><b>' + esc(title) + '</b>' +
+    (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>';
+  host.appendChild(el);
+  while (host.children.length > 5) host.removeChild(host.firstChild);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, 4600);
+}
+
+/* tiny WebAudio blips — no assets, fails silently */
+let AC = null;
+function sfx(kind) {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    const now = AC.currentTime;
+    const notes = {
+      click: [[600, .05, 'square', .04]],
+      hire: [[523, .09, 'triangle', .07], [659, .09, 'triangle', .07], [784, .16, 'triangle', .07]],
+      cash: [[880, .07, 'square', .05], [1174, .12, 'square', .045]],
+      start: [[392, .08, 'sawtooth', .05], [523, .14, 'sawtooth', .045]],
+      done: [[659, .1, 'triangle', .07], [880, .18, 'triangle', .06]],
+      bad: [[220, .18, 'sawtooth', .06]],
+    }[kind] || [];
+    let t0 = now;
+    for (const [f, d, type, vol] of notes) {
+      const osc = AC.createOscillator(), gain = AC.createGain();
+      osc.type = type; osc.frequency.value = f;
+      gain.gain.setValueAtTime(vol, t0);
+      gain.gain.exponentialRampToValueAtTime(.0001, t0 + d);
+      osc.connect(gain).connect(AC.destination);
+      osc.start(t0); osc.stop(t0 + d + .02);
+      t0 += d * .8;
+    }
+  } catch (e) { /* audio blocked — fine */ }
+}
+
+/* confetti burst */
+const confCv = $('#confetti');
+const confCtx = confCv.getContext('2d');
+let confParts = [], confRAF = 0;
+function confetti(n = 80) {
+  confCv.hidden = false;
+  confCv.width = window.innerWidth; confCv.height = window.innerHeight;
+  const colors = ['#ffb020', '#35d0e8', '#3ddc90', '#ff6fae', '#a77bff', '#fff'];
+  for (let i = 0; i < n; i++) {
+    confParts.push({
+      x: window.innerWidth / 2 + rnd(-150, 150), y: window.innerHeight * .42,
+      vx: rnd(-7, 7), vy: rnd(-14, -4), w: rnd(5, 11), h: rnd(6, 14),
+      rot: rnd(0, 6.28), vr: rnd(-.25, .25), c: pick(colors), life: rnd(70, 140),
+    });
+  }
+  if (!confRAF) confRAF = requestAnimationFrame(confTick);
+}
+function confTick() {
+  confCtx.clearRect(0, 0, confCv.width, confCv.height);
+  for (let i = confParts.length - 1; i >= 0; i--) {
+    const p = confParts[i];
+    p.vy += .42; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
+    if (p.life <= 0 || p.y > confCv.height + 40) { confParts.splice(i, 1); continue; }
+    confCtx.save();
+    confCtx.translate(p.x, p.y); confCtx.rotate(p.rot);
+    confCtx.fillStyle = p.c;
+    confCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    confCtx.restore();
+  }
+  if (confParts.length) { confRAF = requestAnimationFrame(confTick); }
+  else { confRAF = 0; confCv.hidden = true; }
+}
+
+/* ==========================================================================
+   8. AVATAR GENERATOR (procedural SVG "photos")
+   ========================================================================== */
+function avatarSVG(person, big) {
+  const rng = seeded(person.id + person.name);
+  const skin = SKINS[Math.floor(rng() * SKINS.length)];
+  const hair = HAIRS[Math.floor(rng() * HAIRS.length)];
+  const shirt = SHIRTS[person.role] || '#7f8ca8';
+  const bg = ['#dfe8f5', '#e8e2d6', '#d9e7e2', '#eadfe8'][Math.floor(rng() * 4)];
+  const style = Math.floor(rng() * 5);
+  const glasses = rng() < .34;
+  const beard = rng() < .3;
+  const smile = rng() < .7;
+  let hairPath = '';
+  if (style === 0) hairPath = '<path d="M14 26c0-9 6-15 14-15s14 6 14 15c0 2-1 4-1 4l-2-8s-6 3-11 3-8-2-10-1l-3 6s-1-2-1-4z" fill="' + hair + '"/>';
+  else if (style === 1) hairPath = '<path d="M13 28c-1-12 7-18 15-18s15 6 14 18c0 0-2-11-14-11S13 28 13 28z" fill="' + hair + '"/><path d="M12 28c0 6 1 12 3 15l-3-2c-2-4-2-9 0-13z" fill="' + hair + '"/>';
+  else if (style === 2) hairPath = '<ellipse cx="28" cy="22" rx="15" ry="11" fill="' + hair + '"/><rect x="13" y="22" width="30" height="5" fill="' + hair + '"/>';
+  else if (style === 3) hairPath = '<path d="M15 27c0-10 5-16 13-16s13 6 13 16l-2-1c-1-6-4-9-11-9s-11 4-11 10z" fill="' + hair + '"/>';
+  else hairPath = '<path d="M16 24c2-8 8-12 12-12s10 4 12 12c1 3 0 6 0 6s-3-6-12-6-11 6-12 6-1-3 0-6z" fill="' + hair + '"/><circle cx="16" cy="30" r="4" fill="' + hair + '"/><circle cx="40" cy="30" r="4" fill="' + hair + '"/>';
+  return '<svg viewBox="0 0 56 68" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs><linearGradient id="bg' + person.id + '" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="' + bg + '"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs>' +
+    '<rect width="56" height="68" fill="url(#bg' + person.id + ')"/>' +
+    '<path d="M6 68c0-12 9-18 22-18s22 6 22 18z" fill="' + shirt + '"/>' +
+    '<path d="M22 46h12v8a6 6 0 0 1-12 0z" fill="' + skin + '"/>' +
+    '<ellipse cx="28" cy="32" rx="13" ry="15" fill="' + skin + '"/>' +
+    '<ellipse cx="15" cy="33" rx="2.4" ry="3.4" fill="' + skin + '"/><ellipse cx="41" cy="33" rx="2.4" ry="3.4" fill="' + skin + '"/>' +
+    hairPath +
+    (beard ? '<path d="M17 36c0 10 5 14 11 14s11-4 11-14c0 0-3 7-11 7s-11-7-11-7z" fill="' + hair + '" opacity=".85"/>' : '') +
+    '<ellipse cx="23" cy="32" rx="1.7" ry="2.1" fill="#26252c"/><ellipse cx="33" cy="32" rx="1.7" ry="2.1" fill="#26252c"/>' +
+    '<path d="M21 27c1.6-1 3.4-1 4.8 0M30.2 27c1.4-1 3.2-1 4.8 0" stroke="' + hair + '" stroke-width="1.4" fill="none" stroke-linecap="round"/>' +
+    (smile ? '<path d="M24 39c1.6 1.8 6.4 1.8 8 0" stroke="#8d4a44" stroke-width="1.5" fill="none" stroke-linecap="round"/>'
+           : '<path d="M24 40h8" stroke="#8d4a44" stroke-width="1.5" stroke-linecap="round"/>') +
+    (glasses ? '<g stroke="#2f3646" stroke-width="1.4" fill="rgba(180,220,255,.28)">' +
+        '<rect x="17.5" y="28" width="9.5" height="8" rx="2.6"/><rect x="29" y="28" width="9.5" height="8" rx="2.6"/>' +
+        '<path d="M27 32h2M13 30l4.5 0M43 30l-4.5 0" fill="none"/></g>' : '') +
+    '</svg>';
+}
+
+/* ==========================================================================
+   9. MODAL SHELL
+   ========================================================================== */
+const root = $('#modalRoot');
+function closeModal() {
+  root.classList.remove('on');
+  root.innerHTML = '';
+  ui.screen = null;
+  ui.stamped = false;
+  renderHUD();
+}
+function modal({ icon, title, sub, body, foot, size }) {
+  root.className = 'on';
+  root.innerHTML =
+    '<div class="mback" data-back>' +
+      '<div class="mpanel ' + (size || '') + '">' +
+        '<div class="mhead"><div class="hi">' + icon + '</div>' +
+          '<div><h2>' + esc(title) + '</h2><p>' + (sub || '') + '</p></div>' +
+          '<button class="mx" data-x>✕</button></div>' +
+        '<div class="mbody thin-sb">' + body + '</div>' +
+        (foot ? '<div class="mfoot">' + foot + '</div>' : '') +
+      '</div></div>';
+  root.querySelector('[data-x]').onclick = () => { sfx('click'); closeModal(); };
+  root.querySelector('[data-back]').addEventListener('pointerdown', e => {
+    if (e.target.hasAttribute('data-back')) closeModal();
+  });
+  return root.querySelector('.mbody');
+}
+
+/* ==========================================================================
+   10. SCREEN: PRODUCT BUILDER
+   ========================================================================== */
+const NAME_BITS = {
+  phone: [['Nova','Apex','Zen','Lumen','Titan','Vex','Orbit','Pulse','Aero','Halo'], ['X','Pro','One','Ultra','Max','S','Air','Edge','+','Prime']],
+  app: [['Flowly','Notely','Sparkk','Mindr','Taskly','Chatly','Loopy','Zenith','Drafty','Pinlet'], ['','','App',' Cloud',' Go',' HQ',' Studio',' AI','',' One']],
+  game: [['Star','Dungeon','Neon','Pixel','Shadow','Sky','Cyber','Rune','Frost','Echo'], [' Drifters',' Crawler',' Racers',' Knights',' Protocol',' Saga',' Riot',' Valley',' Tactics',' Point']],
+  wearable: [['Pulse','Vita','Trace','Halo','Beat','Aura','Zen','Vital','Loop','Step'], [' Band',' Watch',' Fit',' One',' Pro',' Ring',' Air',' Track',' X',' Life']],
+};
+function randomProductName(cat) {
+  const [a, b] = NAME_BITS[cat];
+  return pick(a) + pick(b);
+}
+function defaultSpecs(cat) {
+  const s = {};
+  for (const p of CATEGORIES[cat].parts) s[p.key] = 0;
+  return s;
+}
+
+function openBuild() {
+  if (S.project) { openProjectStatus(); return; }
+  ui.buildCat = ui.buildCat || 'app';
+  ui.buildSpecs = defaultSpecs(ui.buildCat);
+  ui.buildName = randomProductName(ui.buildCat);
+  ui.buildPart = 0;
+  ui.pricePct = 50;
+  ui.screen = 'build';
+
+  const body = modal({
+    icon: '📱', title: 'Design a New Product',
+    sub: 'Pick a category, spec every component, then greenlight it.',
+    body: '<div id="builderHost"></div>',
+    foot: '<div id="buildFoot" style="display:flex;gap:10px;align-items:center;width:100%;flex-wrap:wrap"></div>',
+  });
+  renderBuilder();
+}
+
+function renderBuilder() {
+  const host = $('#builderHost');
+  const cat = CATEGORIES[ui.buildCat];
+  host.innerHTML =
+    '<div class="tabs" id="catTabs">' +
+      Object.values(CATEGORIES).map(c =>
+        '<button class="tab' + (c.id === ui.buildCat ? ' on' : '') + '" data-cat="' + c.id + '">' +
+          '<span style="font-size:15px">' + c.icon + '</span> ' + c.name + '</button>').join('') +
+    '</div>' +
+    '<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">' +
+      '<input class="inp" id="prodName" style="flex:1;min-width:190px" maxlength="26" value="' + esc(ui.buildName) + '" placeholder="Product name">' +
+      '<button class="btn sm" id="diceName" title="Random name">🎲 Roll name</button>' +
+      '<span style="font-size:11.5px;color:var(--muted)">' + esc(cat.tagline) + '</span>' +
+    '</div>' +
+    '<div class="builder">' +
+      '<div><div class="sec-title">Components</div><div class="part-list" id="partList"></div></div>' +
+      '<div><div class="sec-title" id="optTitle">Options</div><div class="opt-grid" id="optGrid"></div>' +
+        '<div class="card soft" style="margin-top:14px" id="teamNote"></div></div>' +
+      '<div class="pv-wrap"><canvas id="previewCanvas"></canvas><div id="pvStats" style="width:100%;display:flex;flex-direction:column;gap:6px"></div></div>' +
+    '</div>';
+
+  $('#catTabs').onclick = e => {
+    const b = e.target.closest('[data-cat]');
+    if (!b) return;
+    ui.buildCat = b.dataset.cat;
+    ui.buildSpecs = defaultSpecs(ui.buildCat);
+    ui.buildName = randomProductName(ui.buildCat);
+    ui.buildPart = 0; ui.pricePct = 50;
+    sfx('click');
+    renderBuilder();
+  };
+  $('#prodName').oninput = e => { ui.buildName = e.target.value; updateFoot(); };
+  $('#diceName').onclick = () => { ui.buildName = randomProductName(ui.buildCat); $('#prodName').value = ui.buildName; sfx('click'); updateFoot(); };
+  renderPartList();
+  renderOptGrid();
+  updateBuilderStats();
+}
+
+function renderPartList() {
+  const cat = CATEGORIES[ui.buildCat];
+  $('#partList').innerHTML = cat.parts.map((p, i) => {
+    const opt = p.opts[ui.buildSpecs[p.key] ?? 0];
+    return '<button class="part-btn' + (i === ui.buildPart ? ' on' : '') + '" data-part="' + i + '">' +
+      '<span class="pi">' + p.icon + '</span>' +
+      '<span class="pt"><b>' + p.label + '</b><span>' + esc(opt.n) + '</span></span></button>';
+  }).join('');
+  $('#partList').onclick = e => {
+    const b = e.target.closest('[data-part]');
+    if (!b) return;
+    ui.buildPart = +b.dataset.part;
+    sfx('click');
+    renderPartList(); renderOptGrid();
+  };
+}
+
+function renderOptGrid() {
+  const cat = CATEGORIES[ui.buildCat];
+  const part = cat.parts[ui.buildPart];
+  const tl = techLevel();
+  const yr = gameDate().getFullYear();
+  $('#optTitle').textContent = part.icon + '  ' + part.label + ' — choose one';
+  $('#optGrid').innerHTML = part.opts.map((op, i) => {
+    const locked = optionLocked(op);
+    const on = (ui.buildSpecs[part.key] ?? 0) === i;
+    return '<button class="opt' + (on ? ' on' : '') + (locked ? ' lock' : '') + '" data-opt="' + i + '"' + (locked ? ' disabled' : '') + '>' +
+      '<span class="tick">●</span>' +
+      '<b>' + (locked ? '🔒 ' : '') + esc(op.n) + '</b>' +
+      '<div class="mini">' +
+        '<i class="c">' + (op.c ? money(op.c) : 'free') + '</i>' +
+        '<i>⏱ ' + op.d + 'd</i>' +
+        '<i class="d">✎ ' + op.dz + '</i>' +
+        '<i class="t">⚡ ' + op.tz + '</i>' +
+        (op.u ? '<i>📦 $' + op.u + '/unit</i>' : '') +
+      '</div>' +
+      (locked ? '<div style="margin-top:7px;font-size:10.5px;color:var(--red);font-weight:700">' +
+        (yr < optionEra(op.req) ? 'Not invented until ' + optionEra(op.req)
+                                : 'Needs tech level ' + op.req + ' (you: ' + tl + ')') + '</div>' : '') +
+      '</button>';
+  }).join('');
+  $('#optGrid').onclick = e => {
+    const b = e.target.closest('[data-opt]');
+    if (!b || b.disabled) return;
+    ui.buildSpecs[part.key] = +b.dataset.opt;
+    sfx('click');
+    renderOptGrid(); renderPartList(); updateBuilderStats();
+  };
+}
+
+function updateBuilderStats() {
+  const cat = CATEGORIES[ui.buildCat];
+  const t = specTotals(ui.buildCat, ui.buildSpecs);
+  const pr = priceRange(ui.buildCat, ui.buildSpecs);
+  const price = Math.round(lerp(pr.min, pr.max, ui.pricePct / 100));
+  const exp = expectedPoints();
+  const rts = teamRates();
+  const fc = teamPoints(rts.d, rts.t);
+  const idealCrew = Math.max(1, Math.round((t.design + t.tech) / 26));
+  const quality = clamp((t.points + fc.tD * cat.wD + fc.tT * cat.wT) / exp, 0, 1.6);
+  const qLabel = quality < .5 ? 'Behind the market' : quality < .8 ? 'Competitive' : quality < 1.1 ? 'Strong' : 'Cutting edge';
+  const qColor = quality < .5 ? 'var(--red)' : quality < .8 ? 'var(--amber)' : quality < 1.1 ? 'var(--cyan)' : 'var(--green)';
+  const margin = price - t.unit;
+
+  $('#pvStats').innerHTML =
+    '<div class="pv-stat"><span>Projected score</span><b style="color:' + qColor + '">' + Math.round(t.points + fc.tD * cat.wD + fc.tT * cat.wT) + ' / ' + Math.round(exp) + '</b></div>' +
+    '<div class="pv-stat"><span>Market read</span><b style="color:' + qColor + '">' + qLabel + '</b></div>' +
+    '<div class="pv-stat"><span>Design ✎ / Tech ⚡</span><b>' + t.design + ' / ' + t.tech + '</b></div>' +
+    '<div class="pv-stat"><span>Dev budget</span><b style="color:var(--amber)">' + money(t.cost) + '</b></div>' +
+    '<div class="pv-stat"><span>Dev time</span><b>' + t.days + ' days</b></div>' +
+    '<div class="pv-stat"><span>Unit cost</span><b>' + (t.unit ? '$' + t.unit : 'none') + '</b></div>' +
+    '<div style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:5px">' +
+      '<span style="color:var(--muted)">Retail price</span><b class="mono" style="font-size:15px;color:var(--green)">$' + price + '</b></div>' +
+      '<input type="range" class="slider" id="priceSlider" min="0" max="100" value="' + ui.pricePct + '">' +
+      '<div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:3px">' +
+        '<span>$' + pr.min + ' bargain</span><span>$' + pr.max + ' premium</span></div>' +
+      '<div style="font-size:11px;margin-top:6px;color:' + (margin > 0 ? 'var(--green)' : 'var(--red)') + ';font-weight:700">' +
+        'Margin: $' + margin + ' per unit' + (price > pr.sug * 1.25 ? ' · pricey, expect fewer sales' : price < pr.sug * .7 ? ' · a steal, expect volume' : ' · fair') + '</div>' +
+    '</div>';
+  $('#priceSlider').oninput = e => { ui.pricePct = +e.target.value; updateBuilderStats(); };
+
+  const crew = S.employees.length;
+  const dz = S.employees.filter(e => e.role === 'design').length;
+  const ez = S.employees.filter(e => e.role === 'engineer').length;
+  $('#teamNote').innerHTML =
+    '<div class="sec-title" style="margin-bottom:6px">Team forecast</div>' +
+    '<div style="font-size:12.5px;line-height:1.5;color:var(--muted)">' +
+      'Your crew of <b style="color:var(--txt)">' + crew + '</b> (' + dz + ' design, ' + ez + ' engineering) will add roughly ' +
+      '<b style="color:var(--purple)">' + Math.round(fc.tD) + ' ✎</b> and ' +
+      '<b style="color:var(--cyan)">' + Math.round(fc.tT) + ' ⚡</b> to the score. ' +
+      (crew === 0 ? '<span style="color:var(--red)">Working solo adds nothing to the score — hire someone.</span>' : '') +
+      '<br>This scope wants about <b style="color:' + (crew >= idealCrew ? 'var(--green)' : 'var(--red)') + '">' + idealCrew +
+      (idealCrew === 1 ? '</b> person' : '</b> people') + ' on it; a thinner crew ships bugs.' +
+    '</div>';
+
+  drawPreview($('#previewCanvas'), ui.buildCat, ui.buildSpecs);
+  updateFoot();
+}
+function updateFoot() {
+  const t = specTotals(ui.buildCat, ui.buildSpecs);
+  const ok = S.cash >= t.cost && ui.buildName.trim().length > 0;
+  $('#buildFoot').innerHTML =
+    '<div style="font-size:12px;color:var(--muted)">Treasury <b class="mono" style="color:var(--green)">' + money(S.cash) + '</b>' +
+      ' → after greenlight <b class="mono" style="color:' + (S.cash - t.cost < 0 ? 'var(--red)' : 'var(--txt)') + '">' + money(S.cash - t.cost) + '</b></div>' +
+    '<div style="flex:1"></div>' +
+    '<button class="btn ghost" data-act="cancel">Cancel</button>' +
+    '<button class="btn primary" data-act="go"' + (ok ? '' : ' disabled') + '>🚀 Greenlight — ' + money(t.cost) + '</button>';
+  $('#buildFoot').onclick = e => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    if (b.dataset.act === 'cancel') { sfx('click'); closeModal(); return; }
+    const name = (ui.buildName || '').trim() || randomProductName(ui.buildCat);
+    if (startProject(ui.buildCat, name, ui.buildSpecs, Math.round(lerp(priceRange(ui.buildCat, ui.buildSpecs).min, priceRange(ui.buildCat, ui.buildSpecs).max, ui.pricePct / 100)))) {
+      closeModal();
+      S.speed = S.speed || 1;
+      render();
+    }
+  };
+}
+
+/* -------- product preview painting -------- */
+function drawPreview(canvas, cat, specs) {
+  if (!canvas) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const r = canvas.getBoundingClientRect();
+  const W = Math.max(120, r.width), H = Math.max(160, r.height);
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  const c = canvas.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.clearRect(0, 0, W, H);
+  const g = c.createRadialGradient(W / 2, H * .38, 6, W / 2, H * .5, H * .8);
+  g.addColorStop(0, 'rgba(90,130,220,.35)'); g.addColorStop(1, 'rgba(8,12,24,0)');
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+
+  const idx = k => specs[k] ?? 0;
+  const rr = (x, y, w, h, rad) => { c.beginPath(); c.moveTo(x + rad, y);
+    c.arcTo(x + w, y, x + w, y + h, rad); c.arcTo(x + w, y + h, x, y + h, rad);
+    c.arcTo(x, y + h, x, y, rad); c.arcTo(x, y, x + w, y, rad); c.closePath(); };
+
+  if (cat === 'phone') {
+    const bodyCols = ['#5a6172', '#b9bfca', '#2b3242', '#d9c9a4'];
+    const col = bodyCols[idx('body')];
+    const pw = W * .46, ph = H * .74, px = (W - pw) / 2, py = (H - ph) / 2;
+    c.save(); c.shadowColor = 'rgba(0,0,0,.65)'; c.shadowBlur = 26; c.shadowOffsetY = 12;
+    rr(px, py, pw, ph, 15); c.fillStyle = col; c.fill(); c.restore();
+    rr(px + 1.5, py + 1.5, pw - 3, ph - 3, 13); c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 1.5; c.stroke();
+    /* screen */
+    const s = idx('screen'), bez = [7, 5, 3.5, 2.5][s];
+    rr(px + bez, py + bez, pw - bez * 2, ph - bez * 2, 11);
+    const sg = c.createLinearGradient(px, py, px + pw, py + ph);
+    sg.addColorStop(0, ['#1b2436', '#14233d', '#0d1c33', '#101a3a'][s]);
+    sg.addColorStop(1, ['#2a3450', '#1d3a63', '#2a1f5e', '#3a1f6e'][s]);
+    c.fillStyle = sg; c.fill();
+    /* notch / punch hole by screen tier */
+    c.fillStyle = 'rgba(0,0,0,.75)';
+    if (s === 0) { c.fillRect(px + bez, py + bez, pw - bez * 2, 9); }
+    else if (s === 1) { rr(px + pw / 2 - 16, py + bez + 1, 32, 7, 4); c.fill(); }
+    else if (s === 2) { c.beginPath(); c.arc(px + pw / 2, py + bez + 7, 3.4, 0, 7); c.fill(); }
+    else { rr(px + pw / 2 - 2, py + bez, 4, ph - bez * 2, 2); c.fillStyle = 'rgba(0,0,0,.35)'; c.fill(); }
+    /* UI glow rows */
+    c.save(); c.globalAlpha = .75;
+    for (let i = 0; i < 4; i++) {
+      rr(px + bez + 9, py + ph * .3 + i * 15, (pw - bez * 2 - 18) * (i === 0 ? 1 : .55 + i * .12), 7, 3.5);
+      c.fillStyle = ['#ffb020', '#35d0e8', '#3ddc90', '#a77bff'][i]; c.fill();
+    }
+    c.restore();
+    /* cameras */
+    const cams = [1, 2, 3, 4][idx('camera')];
+    const cbx = px + 9, cby = py + 10;
+    rr(cbx, cby, cams > 2 ? 30 : 22, cams > 2 ? 30 : 22, 8);
+    c.fillStyle = 'rgba(0,0,0,.35)'; c.fill();
+    for (let i = 0; i < cams; i++) {
+      c.beginPath();
+      c.arc(cbx + 8 + (i % 2) * 13, cby + 8 + Math.floor(i / 2) * 13, 4.6, 0, 7);
+      c.fillStyle = '#10141f'; c.fill();
+      c.beginPath(); c.arc(cbx + 6.6 + (i % 2) * 13, cby + 6.6 + Math.floor(i / 2) * 13, 1.6, 0, 7);
+      c.fillStyle = 'rgba(120,200,255,.85)'; c.fill();
+    }
+    /* signature feature badge */
+    const ex = idx('extra');
+    if (ex > 0) {
+      c.font = '700 11px Outfit, sans-serif'; c.textAlign = 'center';
+      c.fillStyle = '#ffd98a';
+      c.fillText(['', '👆 Fingerprint', '😊 FaceID', '🛰 Satellite'][ex], W / 2, py + ph + 18);
+    }
+  }
+
+  else if (cat === 'app' || cat === 'game') {
+    const ww = W * .82, wh = H * .56, wx = (W - ww) / 2, wy = H * .18;
+    c.save(); c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 24; c.shadowOffsetY = 10;
+    rr(wx, wy, ww, wh, 10); c.fillStyle = '#121a30'; c.fill(); c.restore();
+    /* title bar */
+    rr(wx, wy, ww, 18, 10); c.fillStyle = '#1e2947'; c.fill();
+    c.fillRect(wx, wy + 12, ww, 6);
+    ['#ff5f57', '#febc2e', '#28c840'].forEach((cc, i) => {
+      c.beginPath(); c.arc(wx + 11 + i * 12, wy + 9, 3.4, 0, 7); c.fillStyle = cc; c.fill();
+    });
+    if (cat === 'app') {
+      const uxi = idx('ux');
+      const accents = ['#7f8ca8', '#35d0e8', '#a77bff', '#ffb020'][uxi];
+      /* sidebar */
+      c.fillStyle = 'rgba(255,255,255,.05)'; c.fillRect(wx, wy + 18, ww * .24, wh - 18);
+      for (let i = 0; i < 4; i++) {
+        rr(wx + 7, wy + 28 + i * 13, ww * .24 - 14, 7, 3.5);
+        c.fillStyle = i === 0 ? accents : 'rgba(255,255,255,.14)'; c.fill();
+      }
+      /* content blocks grow richer with UX tier */
+      const cols = [1, 2, 2, 3][uxi];
+      const bw = (ww * .72 - 10 * (cols + 1)) / cols;
+      for (let i = 0; i < cols * 2; i++) {
+        const bx = wx + ww * .24 + 10 + (i % cols) * (bw + 10);
+        const by = wy + 28 + Math.floor(i / cols) * (wh * .32);
+        rr(bx, by, bw, wh * .26, 6);
+        c.fillStyle = i % 3 === 0 ? 'rgba(53,208,232,.22)' : 'rgba(255,255,255,.08)'; c.fill();
+        rr(bx + 6, by + 7, bw * .55, 5, 2.5); c.fillStyle = accents; c.fill();
+        rr(bx + 6, by + 17, bw * .8, 4, 2); c.fillStyle = 'rgba(255,255,255,.2)'; c.fill();
+      }
+      /* AI sparkle for the killer feature */
+      if (idx('feature') >= 2) { c.font = '16px serif'; c.fillText('✨', wx + ww - 26, wy + wh - 10); }
+      if (idx('sec') >= 2) { c.font = '14px serif'; c.fillText('🔒', wx + ww - 46, wy + wh - 10); }
+    } else {
+      /* game scene */
+      const art = idx('art');
+      const sky = c.createLinearGradient(0, wy + 18, 0, wy + wh);
+      const skies = [['#2b1b4d', '#6b3f7a'], ['#1d3c6b', '#8fbcd4'], ['#122b4d', '#2f6f8f'], ['#0c1626', '#3a5a72']][art];
+      sky.addColorStop(0, skies[0]); sky.addColorStop(1, skies[1]);
+      c.fillStyle = sky; c.fillRect(wx, wy + 18, ww, wh - 18);
+      /* ground */
+      c.fillStyle = ['#2f7d4f', '#3c6b3a', '#4a5f3a', '#3a4a3a'][art];
+      c.fillRect(wx, wy + wh - 26, ww, 26);
+      /* hero */
+      const hx = wx + ww * .32, hy = wy + wh - 26;
+      if (art === 0) {
+        c.fillStyle = '#ffd166'; c.fillRect(hx, hy - 16, 6, 6); c.fillStyle = '#ef476f'; c.fillRect(hx - 2, hy - 10, 10, 10);
+      } else {
+        c.beginPath(); c.arc(hx + 4, hy - 18, 6, 0, 7); c.fillStyle = '#ffd166'; c.fill();
+        rr(hx - 2, hy - 12, 12, 12, 3); c.fillStyle = '#ef476f'; c.fill();
+      }
+      /* props */
+      for (let i = 0; i < 3 + art; i++) {
+        const px2 = wx + 14 + i * (ww - 28) / (3 + art);
+        c.fillStyle = 'rgba(0,0,0,.28)';
+        c.fillRect(px2, wy + wh - 26 - (8 + i * 4), 10, 8 + i * 4);
+      }
+      /* HUD */
+      rr(wx + 8, wy + 24, 40, 6, 3); c.fillStyle = '#ff5d6c'; c.fill();
+      if (idx('multi') >= 2) { c.font = '13px serif'; c.fillText('👥', wx + ww - 24, wy + 32); }
+    }
+    c.font = '700 11px Outfit, sans-serif'; c.textAlign = 'center'; c.fillStyle = 'rgba(210,225,255,.7)';
+    c.fillText(cat === 'app' ? 'v1.0 build' : 'alpha build', W / 2, wy + wh + 18);
+  }
+
+  else if (cat === 'wearable') {
+    const bandCol = ['#3c4459', '#5c6b7a', '#aeb6c2', '#e6e2d6'][idx('band')];
+    const cw = W * .42, ch = cw * 1.12, cx0 = (W - cw) / 2, cy0 = H * .3;
+    /* band */
+    c.fillStyle = bandCol;
+    rr(cx0 + cw * .22, cy0 - H * .2, cw * .56, H * .28, 8); c.fill();
+    rr(cx0 + cw * .22, cy0 + ch - 8, cw * .56, H * .28, 8); c.fill();
+    /* case */
+    c.save(); c.shadowColor = 'rgba(0,0,0,.6)'; c.shadowBlur = 20; c.shadowOffsetY = 8;
+    rr(cx0, cy0, cw, ch, 16); c.fillStyle = ['#4b5162', '#6f7a88', '#c3c9d4', '#e8dcc0'][idx('band')]; c.fill(); c.restore();
+    /* face */
+    const d = idx('disp');
+    rr(cx0 + 6, cy0 + 6, cw - 12, ch - 12, 12);
+    c.fillStyle = ['#1a1f2b', '#152238', '#0e1b30', '#0a1426'][d]; c.fill();
+    /* dial */
+    const fx = cx0 + cw / 2, fy = cy0 + ch / 2;
+    c.strokeStyle = ['#7f8ca8', '#35d0e8', '#3ddc90', '#ffb020'][d]; c.lineWidth = 3;
+    c.beginPath(); c.arc(fx, fy, cw * .28, -1.5, 1.2); c.stroke();
+    c.strokeStyle = 'rgba(255,111,174,.9)';
+    c.beginPath(); c.arc(fx, fy, cw * .2, -1.5, .4 + idx('sensor') * .5); c.stroke();
+    c.font = '700 13px JetBrains Mono, monospace'; c.textAlign = 'center'; c.fillStyle = '#e8edff';
+    c.fillText(['8,204', '12,480', '16,902', '21,337'][idx('sensor')], fx, fy + 5);
+    c.font = '600 8px Outfit, sans-serif'; c.fillStyle = 'rgba(200,215,245,.65)';
+    c.fillText('STEPS', fx, fy + 15);
+    if (idx('conn') >= 2) { c.font = '12px serif'; c.fillText('📶', fx, cy0 + 20); }
+  }
+}
+
+/* ==========================================================================
+   11. SCREEN: EMPLOYEES (hiring card + roster)
+   ========================================================================== */
+function openEmployees() {
+  ui.screen = 'employees';
+  $('#hireBadge').hidden = true;
+  if (!S.candidates.length) refreshCandidates(6);
+  ui.candIndex = clamp(ui.candIndex, 0, Math.max(0, S.candidates.length - 1));
+  modal({
+    icon: '👥', title: 'Talent',
+    sub: 'Review applicants, stamp the good ones, and keep the team alive.',
+    body:
+      '<div class="tabs" id="empTabs">' +
+        '<button class="tab on" data-t="hire">📄 Applicants</button>' +
+        '<button class="tab" data-t="team">🧑‍💻 My Team (' + S.employees.length + ')</button>' +
+      '</div><div id="empHost"></div>',
+  });
+  $('#empTabs').onclick = e => {
+    const b = e.target.closest('[data-t]');
+    if (!b) return;
+    $$('#empTabs .tab').forEach(x => x.classList.toggle('on', x === b));
+    sfx('click');
+    b.dataset.t === 'hire' ? renderHireCard() : renderRoster();
+  };
+  renderHireCard();
+}
+
+function renderHireCard() {
+  const host = $('#empHost');
+  if (!S.candidates.length) {
+    host.innerHTML = '<div class="empty"><span class="big">📭</span>No applicants right now.<br>' +
+      'New CVs arrive at the start of every month.' +
+      '<div style="margin-top:16px"><button class="btn" id="poach">🎯 Headhunt now — ' + money(headhuntCost()) + '</button></div></div>';
+    $('#poach').onclick = doHeadhunt;
+    return;
+  }
+  ui.candIndex = clamp(ui.candIndex, 0, S.candidates.length - 1);
+  const c = S.candidates[ui.candIndex];
+  const R = ROLES[c.role];
+  const free = deskCapacity() - S.employees.length;
+  const affordable = S.cash >= c.salary;
+  host.innerHTML =
+    '<div class="resume-wrap"><div class="resume" id="resumeCard">' +
+      '<div class="res-top">' +
+        '<div class="photo">' + avatarSVG(c, true) + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div class="role">' + R.icon + ' ' + R.label + '</div>' +
+          '<h3>' + esc(c.name) + '</h3>' +
+          '<div style="font-size:12px;color:#6b5f48;font-weight:600;margin-top:3px">' +
+            'Application #' + (1000 + ui.candIndex + S.day % 900) + ' · ' + fullDate() + '</div>' +
+          '<div class="res-meta">' +
+            '<div><span>Country</span><b>' + c.flag + ' ' + esc(c.country) + '</b></div>' +
+            '<div><span>Age</span><b>' + c.age + '</b></div>' +
+            '<div><span>Experience</span><b>' + c.exp + ' yrs</b></div>' +
+            '<div><span>Availability</span><b>' + (c.exp > 9 ? 'Notice period' : 'Immediate') + '</b></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="skill-row">' +
+        '<span style="font-size:11px;font-weight:800;letter-spacing:.14em;color:#6b5f48">SKILL</span>' +
+        '<div class="skill-bar"><i style="width:' + (c.skill * 10) + '%"></i></div>' +
+        '<span class="skill-num">' + c.skill.toFixed(1) + '<span style="font-size:12px;opacity:.55">/10</span></span>' +
+      '</div>' +
+      '<div class="traits">' +
+        (c.traits.length ? c.traits.map(t => {
+          const T = traitObj(t);
+          return '<span class="trait ' + (T.good ? 'good' : 'bad') + '">' + esc(T.n) + ' · ' + esc(T.d) + '</span>';
+        }).join('') : '<span class="trait">No notable quirks</span>') +
+      '</div>' +
+      '<div class="salary-box">' +
+        '<div><div style="font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#6b5f48">ASKING SALARY</div>' +
+        '<div class="big">' + money(c.salary) + '<span style="font-size:12px;font-weight:700">/month</span></div></div>' +
+        '<div style="text-align:right;font-size:11px;color:#6b5f48;font-weight:700">' +
+          'Value score<br><b style="font-size:17px;color:#2a2317">' + (c.skill / (c.salary / 1000)).toFixed(2) + '</b></div>' +
+      '</div>' +
+      '<div class="stamp" id="stamp">Hired</div>' +
+    '</div></div>' +
+
+    '<div class="pager">' +
+      '<button class="circ" data-nav="-1">‹</button>' +
+      '<span class="pg">PAGE ' + (ui.candIndex + 1) + ' / ' + S.candidates.length + '</span>' +
+      '<button class="circ" data-nav="1">›</button>' +
+    '</div>' +
+
+    '<div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">' +
+      '<button class="btn" data-act="pass">👋 Pass</button>' +
+      '<button class="btn green' + (free > 0 && affordable ? ' pulse' : '') + '" data-act="hire"' +
+        (free > 0 && affordable ? '' : ' disabled') + '>✍️ Hire — ' + money(c.salary) + '/mo</button>' +
+      '<button class="btn" data-act="poach">🎯 Headhunt ' + money(headhuntCost()) + '</button>' +
+    '</div>' +
+    '<div style="text-align:center;margin-top:10px;font-size:11.5px;color:var(--muted)">' +
+      (free > 0 ? '🪑 ' + free + ' free desk' + (free > 1 ? 's' : '') : '<span style="color:var(--red)">🚫 No free desks — upgrade the office</span>') +
+      (affordable ? '' : ' · <span style="color:var(--red)">not enough cash for the first month</span>') +
+      ' · burn ' + money(monthlyBurn()) + '/mo → ' + runwayChip() +
+      ' · with them ' + money(monthlyBurn() + c.salary) + '/mo' +
+    '</div>';
+
+  host.onclick = e => {
+    const nav = e.target.closest('[data-nav]');
+    if (nav) {
+      ui.candIndex = (ui.candIndex + +nav.dataset.nav + S.candidates.length) % S.candidates.length;
+      sfx('click'); renderHireCard(); return;
+    }
+    const act = e.target.closest('[data-act]');
+    if (!act) return;
+    if (act.dataset.act === 'pass') {
+      const stamp = $('#stamp');
+      stamp.textContent = 'Passed'; stamp.classList.add('rej', 'hit');
+      S.candidates.splice(ui.candIndex, 1);
+      setTimeout(() => { renderHireCard(); }, 480);
+      sfx('click');
+      queueSave();
+    } else if (act.dataset.act === 'hire') {
+      const cand = S.candidates[ui.candIndex];
+      const stamp = $('#stamp');
+      stamp.textContent = 'Approved'; stamp.classList.add('hit');
+      $$('[data-act]', host).forEach(b => b.disabled = true);
+      setTimeout(() => {
+        if (hireCandidate(cand)) { confetti(34); }
+        renderHireCard();
+        renderHUD();
+        $$('#empTabs .tab')[1].textContent = '🧑‍💻 My Team (' + S.employees.length + ')';
+      }, 620);
+    } else if (act.dataset.act === 'poach') {
+      doHeadhunt();
+    }
+  };
+}
+function headhuntCost() { return Math.round(4000 * Math.pow(1.6, S.officeLevel)); }
+function doHeadhunt() {
+  const cost = headhuntCost();
+  if (S.cash < cost) { toast('bad', '💸 Headhunter unpaid', 'You need ' + money(cost)); return; }
+  spend(cost, 'recruiting');
+  const c = makeCandidate(S.officeLevel + 2);
+  S.candidates.unshift(c);
+  ui.candIndex = 0;
+  toast('info', '🎯 Headhunter delivered', c.name + ' · skill ' + c.skill.toFixed(1));
+  sfx('click');
+  renderHireCard();
+  renderHUD();
+  queueSave();
+}
+
+function renderRoster() {
+  const host = $('#empHost');
+  if (!S.employees.length) {
+    host.innerHTML = '<div class="empty"><span class="big">🪑</span>Nobody works here yet.<br>Open the Applicants tab and hire your first teammate.</div>';
+    return;
+  }
+  const byRole = {};
+  for (const e of S.employees) (byRole[e.role] = byRole[e.role] || []).push(e);
+  host.innerHTML =
+    '<div class="grid3" style="margin-bottom:16px">' +
+      '<div class="card soft"><div class="sec-title">Monthly burn</div><div class="mono" style="font-size:20px;font-weight:800;color:var(--amber)">' + money(monthlyBurn()) + '</div>' +
+        '<div style="font-size:11px;margin-top:4px">' + runwayChip() + '</div></div>' +
+      '<div class="card soft"><div class="sec-title">Avg skill</div><div class="mono" style="font-size:20px;font-weight:800">' +
+        (S.employees.reduce((a, e) => a + e.skill, 0) / S.employees.length).toFixed(1) + '</div></div>' +
+      '<div class="card soft"><div class="sec-title">Team output</div><div class="mono" style="font-size:20px;font-weight:800;color:var(--cyan)">' +
+        Math.round(S.employees.reduce((a, e) => a + empOutput(e), 0) * teamBonus()) + '/day</div></div>' +
+    '</div>' +
+    Object.keys(ROLES).filter(r => byRole[r]).map(r =>
+      '<div style="margin-bottom:16px"><div class="sec-title">' + ROLES[r].icon + ' ' + ROLES[r].label + 's — ' + ROLES[r].blurb + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">' +
+      byRole[r].map(e =>
+        '<div class="emp-row">' +
+          '<div class="emp-av">' + avatarSVG(e) + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+              '<b style="font-size:13.5px">' + esc(e.name) + '</b>' +
+              '<span class="tagr r-' + e.role + '">' + ROLES[e.role].label + '</span>' +
+              '<span style="font-size:11px;color:var(--muted)">' + e.flag + ' ' + esc(e.country) + ' · ' + e.exp + 'y exp</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;margin-top:6px">' +
+              '<span style="font-size:11px;color:var(--muted);min-width:56px">⚡ Energy</span>' +
+              '<div class="ebar' + (e.energy < 32 ? ' low' : '') + '"><i style="width:' + Math.round(e.energy) + '%"></i></div>' +
+              '<span class="mono" style="font-size:11px;color:var(--muted)">' + Math.round(e.energy) + '%</span>' +
+            '</div>' +
+            (e.traits.length ? '<div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">' +
+              e.traits.map(t => '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:rgba(255,255,255,.07);color:' +
+                (traitObj(t).good ? 'var(--green)' : 'var(--red)') + '">' + esc(t) + '</span>').join('') + '</div>' : '') +
+          '</div>' +
+          '<div style="text-align:right;flex:none">' +
+            '<div class="mono" style="font-weight:800;font-size:16px">' + e.skill.toFixed(1) + '<span style="opacity:.5;font-size:11px">/10</span></div>' +
+            '<div class="mono" style="font-size:11.5px;color:var(--amber)">' + money(e.salary) + '/mo</div>' +
+            '<button class="btn sm ghost" style="margin-top:6px;color:var(--red);border-color:rgba(255,93,108,.4)" data-fire="' + e.id + '">Let go</button>' +
+          '</div>' +
+        '</div>').join('') + '</div></div>').join('') +
+    '<div class="card soft"><div class="sec-title">Perks</div>' +
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+        '<button class="btn sm" data-perk="coffee">☕ Coffee run — ' + money(1200 * Math.max(1, S.employees.length)) + ' (+18 energy)</button>' +
+        '<button class="btn sm" data-perk="retreat">🏝️ Team retreat — ' + money(9000 * Math.max(1, S.employees.length)) + ' (full energy, +hype)</button>' +
+      '</div></div>';
+
+  host.onclick = e => {
+    const f = e.target.closest('[data-fire]');
+    if (f) {
+      fireEmployee(f.dataset.fire);
+      renderRoster(); renderHUD();
+      $$('#empTabs .tab')[1].textContent = '🧑‍💻 My Team (' + S.employees.length + ')';
+      return;
+    }
+    const p = e.target.closest('[data-perk]');
+    if (!p) return;
+    const n = Math.max(1, S.employees.length);
+    if (p.dataset.perk === 'coffee') {
+      const cost = 1200 * n;
+      if (S.cash < cost) return toast('bad', '💸 Too broke for coffee', 'Ironic, but true.');
+      spend(cost, 'perks');
+      S.employees.forEach(x => x.energy = clamp(x.energy + 18, 0, 100));
+      toast('good', '☕ Coffee for everyone', '+18 energy across the team');
+    } else {
+      const cost = 9000 * n;
+      if (S.cash < cost) return toast('bad', '💸 Retreat cancelled', 'You need ' + money(cost));
+      spend(cost, 'perks');
+      S.employees.forEach(x => x.energy = 100);
+      S.hype = clamp(S.hype + .12, 0, 4);
+      toast('good', '🏝️ Team retreat!', 'Everyone is back at 100% — and posting about it');
+      confetti(30);
+    }
+    sfx('cash');
+    renderRoster(); renderHUD(); queueSave();
+  };
+}
+
+/* ==========================================================================
+   12. SCREEN: MARKETING
+   ========================================================================== */
+function openMarketing() {
+  ui.screen = 'marketing';
+  const active = S.campaigns.map(c => {
+    const def = CAMPAIGNS.find(x => x.id === c.id);
+    const left = c.days - (S.day - c.start);
+    return '<div class="emp-row"><div style="font-size:22px">' + def.icon + '</div>' +
+      '<div style="flex:1"><b style="font-size:13px">' + def.name + '</b>' +
+      '<div style="font-size:11px;color:var(--muted)">' + left + ' days left · +' + Math.round(def.hype * 100) + '% hype applied</div>' +
+      '<div class="bar cyan" style="margin-top:6px"><i style="width:' + Math.round((1 - left / c.days) * 100) + '%"></i></div></div></div>';
+  }).join('');
+
+  modal({
+    icon: '📣', title: 'Marketing',
+    sub: 'Hype sells copies. It also evaporates — keep feeding it.',
+    body:
+      '<div class="grid3" style="margin-bottom:18px">' +
+        '<div class="card soft"><div class="sec-title">Current hype</div>' +
+          '<div class="mono" style="font-size:24px;font-weight:800;color:var(--amber)">' + Math.round(S.hype * 100) + '%</div>' +
+          '<div class="bar" style="margin-top:8px"><i style="width:' + clamp(S.hype / 4 * 100, 0, 100) + '%"></i></div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:6px">Sales multiplier ×' + (1 + S.hype * .7).toFixed(2) + '</div></div>' +
+        '<div class="card soft"><div class="sec-title">Fans</div>' +
+          '<div class="mono" style="font-size:24px;font-weight:800;color:var(--pink)">' + num(S.fans) + '</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:6px">Every launch reaches them first</div></div>' +
+        '<div class="card soft"><div class="sec-title">Marketers on staff</div>' +
+          '<div class="mono" style="font-size:24px;font-weight:800;color:var(--cyan)">' + S.employees.filter(e => e.role === 'marketer').length + '</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:6px">They slow hype decay every single day</div></div>' +
+      '</div>' +
+      (active ? '<div class="sec-title">Running campaigns</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">' + active + '</div>' : '') +
+      '<div class="sec-title">Buy a campaign</div>' +
+      '<div class="grid2" id="campGrid">' +
+        CAMPAIGNS.map(c => {
+          const can = S.cash >= c.cost;
+          return '<button class="opt" data-camp="' + c.id + '"' + (can ? '' : ' disabled style="opacity:.45"') + '>' +
+            '<b style="font-size:14px">' + c.icon + ' ' + c.name + '</b>' +
+            '<div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">' + c.d + '</div>' +
+            '<div class="mini">' +
+              '<i class="c">' + money(c.cost) + '</i><i class="d">+' + Math.round(c.hype * 100) + '% hype</i>' +
+              '<i class="t">+' + num(c.fans) + ' fans</i><i>⏱ ' + c.days + 'd</i>' +
+            '</div></button>';
+        }).join('') +
+      '</div>',
+  });
+  $('#campGrid').onclick = e => {
+    const b = e.target.closest('[data-camp]');
+    if (!b || b.disabled) return;
+    const c = CAMPAIGNS.find(x => x.id === b.dataset.camp);
+    if (S.cash < c.cost) return toast('bad', '💸 Cannot afford it', c.name + ' costs ' + money(c.cost));
+    spend(c.cost, 'marketing');
+    S.hype = clamp(S.hype + c.hype, 0, 4);
+    S.fans += c.fans;
+    S.campaigns.push({ id: c.id, start: S.day, days: c.days });
+    toast('money', '📣 ' + c.name + ' launched', '+' + Math.round(c.hype * 100) + '% hype · +' + num(c.fans) + ' fans');
+    sfx('cash');
+    spawnParticle('+HYPE', '#ff6fae');
+    queueSave();
+    openMarketing();
+    renderHUD();
+  };
+}
+
+/* ==========================================================================
+   13. SCREEN: PRODUCTS / PORTFOLIO
+   ========================================================================== */
+function sparkline(data, color) {
+  if (!data || data.length < 2) return '<svg class="spark"></svg>';
+  const w = 240, h = 42, max = Math.max(...data, 1), min = Math.min(...data, 0);
+  const pts = data.map((v, i) => [i / (data.length - 1) * w, h - 2 - (v - min) / (max - min || 1) * (h - 6)]);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' +
+    '<path d="' + d + ' L' + w + ' ' + h + ' L0 ' + h + ' Z" fill="' + color + '" opacity=".16"/>' +
+    '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round"/></svg>';
+}
+function openProducts() {
+  ui.screen = 'products';
+  const totalRev = S.products.reduce((a, p) => a + p.revenue, 0);
+  const totalProfit = S.products.reduce((a, p) => a + p.profit, 0);
+  modal({
+    icon: '📦', title: 'Portfolio',
+    sub: 'Everything you have ever shipped, and what it earns today.',
+    body:
+      '<div class="grid3" style="margin-bottom:18px">' +
+        '<div class="card soft"><div class="sec-title">Lifetime revenue</div><div class="mono" style="font-size:22px;font-weight:800;color:var(--green)">' + money(totalRev) + '</div></div>' +
+        '<div class="card soft"><div class="sec-title">Lifetime profit</div><div class="mono" style="font-size:22px;font-weight:800;color:' + (totalProfit >= 0 ? 'var(--green)' : 'var(--red)') + '">' + money(totalProfit) + '</div></div>' +
+        '<div class="card soft"><div class="sec-title">Units sold</div><div class="mono" style="font-size:22px;font-weight:800">' + num(S.stats.units) + '</div></div>' +
+      '</div>' +
+      (S.products.length ? '<div style="display:flex;flex-direction:column;gap:12px" id="prodList">' +
+        S.products.map(p => {
+          const cat = CATEGORIES[p.cat];
+          const age = S.day - p.launchDay;
+          const daily = p.history.length ? p.history.slice(-7).reduce((a, b) => a + b, 0) / Math.min(7, p.history.length) : 0;
+          const col = p.rating >= 8 ? '#3ddc90' : p.rating >= 6 ? '#35d0e8' : p.rating >= 4 ? '#ffb020' : '#ff5d6c';
+          return '<div class="prod-card"><div class="prod-top">' +
+            '<div class="prod-ico">' + cat.icon + '</div>' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+                '<b style="font-size:15px">' + esc(p.name) + '</b>' +
+                '<span class="tagr" style="background:rgba(255,255,255,.08);color:var(--muted)">' + cat.name + '</span>' +
+                (p.active ? '<span class="tagr r-ops">ON SALE</span>' : '<span class="tagr" style="background:rgba(255,255,255,.07);color:var(--muted)">RETIRED</span>') +
+              '</div>' +
+              '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">' +
+                '<span class="stars">' + stars(p.rating) + '</span>' +
+                '<b class="mono" style="color:' + col + '">' + p.rating.toFixed(1) + '</b>' +
+                '<span style="font-size:11px;color:var(--muted)">· launched ' + Math.round(age / 30) + ' months ago · $' + p.price + '</span>' +
+              '</div>' +
+              '<div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;font-size:11.5px">' +
+                '<span style="color:var(--muted)">Units <b class="mono" style="color:var(--txt)">' + num(p.units) + '</b></span>' +
+                '<span style="color:var(--muted)">Revenue <b class="mono" style="color:var(--green)">' + money(p.revenue) + '</b></span>' +
+                '<span style="color:var(--muted)">Profit <b class="mono" style="color:' + (p.profit >= 0 ? 'var(--green)' : 'var(--red)') + '">' + money(p.profit) + '</b></span>' +
+                '<span style="color:var(--muted)">Now <b class="mono">' + money(daily) + '/day</b></span>' +
+              '</div>' +
+            '</div>' +
+            '<div style="width:150px;flex:none" class="hide-sm">' + sparkline(p.history, col) + '</div>' +
+          '</div>' +
+          (p.active ? '<div style="display:flex;gap:8px;padding:0 13px 13px;flex-wrap:wrap">' +
+            '<button class="btn sm" data-cut="' + p.id + '">🏷️ Price cut −15% (boosts volume)</button>' +
+            '<button class="btn sm ghost" data-retire="' + p.id + '">📴 Discontinue</button>' +
+          '</div>' : '') +
+          '</div>';
+        }).join('') + '</div>'
+        : '<div class="empty"><span class="big">📦</span>No products yet.<br>Use <b>New Project</b> to design your first one.</div>'),
+  });
+  const list = $('#prodList');
+  if (list) list.onclick = e => {
+    const cut = e.target.closest('[data-cut]');
+    if (cut) {
+      const p = S.products.find(x => x.id === cut.dataset.cut);
+      p.price = Math.max(1, Math.round(p.price * .85));
+      toast('info', '🏷️ ' + p.name + ' price cut', 'Now $' + p.price + ' — expect more volume, thinner margin');
+      sfx('click'); queueSave(); openProducts(); return;
+    }
+    const ret = e.target.closest('[data-retire]');
+    if (ret) {
+      const p = S.products.find(x => x.id === ret.dataset.retire);
+      p.active = false;
+      toast('info', '📴 ' + p.name + ' discontinued', 'It served you well.');
+      sfx('click'); queueSave(); openProducts();
+    }
+  };
+}
+
+/* ==========================================================================
+   14. SCREEN: RATINGS & MARKET SHARE (+ M&A)
+   ========================================================================== */
+function openMarket() {
+  ui.screen = 'market';
+  const all = [{ name: S.company, icon: '🏠', share: S.share, you: true, strength: 0, value: netWorth() }]
+    .concat(S.rivals.filter(r => !r.owned).map(r => ({ ...r })));
+  all.sort((a, b) => b.share - a.share);
+  const colors = ['#ffb020', '#35d0e8', '#a77bff', '#ff6fae', '#3ddc90', '#ff5d6c', '#8d9ac4'];
+  const owned = S.rivals.filter(r => r.owned);
+
+  modal({
+    icon: '📊', title: 'Ratings & Market',
+    sub: 'Where you stand, what the press says, and who is for sale.',
+    body:
+      '<div class="tabs" id="mktTabs">' +
+        '<button class="tab on" data-t="share">📈 Market share</button>' +
+        '<button class="tab" data-t="press">📰 Reviews</button>' +
+        '<button class="tab" data-t="ma">🤝 Acquisitions</button>' +
+      '</div><div id="mktHost"></div>',
+  });
+
+  const views = {
+    share: () =>
+      '<div class="card" style="margin-bottom:16px">' +
+        '<div class="sec-title">Global market share — ' + dateLabel() + '</div>' +
+        all.map((r, i) =>
+          '<div class="share-row">' +
+            '<span style="width:22px;font-size:16px">' + (r.icon || '🏢') + '</span>' +
+            '<span style="width:130px;font-size:12.5px;font-weight:' + (r.you ? '800' : '600') + ';color:' + (r.you ? 'var(--amber)' : 'var(--txt)') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.name) + (r.you ? ' (you)' : '') + '</span>' +
+            '<div class="share-bar"><i style="width:' + clamp(r.share, 0, 100) + '%;background:' + colors[i % colors.length] + '"></i></div>' +
+            '<b class="mono" style="width:54px;text-align:right;font-size:12.5px">' + r.share.toFixed(1) + '%</b>' +
+          '</div>').join('') +
+      '</div>' +
+      '<div class="grid3">' +
+        '<div class="card soft"><div class="sec-title">Net worth</div><div class="mono" style="font-size:20px;font-weight:800;color:var(--green)">' + money(netWorth()) + '</div></div>' +
+        '<div class="card soft"><div class="sec-title">Best rating ever</div><div class="mono" style="font-size:20px;font-weight:800;color:var(--amber)">' + (S.stats.best ? S.stats.best.toFixed(1) : '—') + '</div></div>' +
+        '<div class="card soft"><div class="sec-title">Products shipped</div><div class="mono" style="font-size:20px;font-weight:800">' + S.stats.launches + '</div></div>' +
+      '</div>' +
+      '<div class="card soft" style="margin-top:16px"><div class="sec-title">Revenue — last 90 days</div>' +
+        sparkline(S.revenueLog.slice(-90), '#3ddc90') + '</div>',
+
+    press: () => S.reviews.length
+      ? '<div style="display:flex;flex-direction:column;gap:10px">' + S.reviews.map(r =>
+          '<div class="review"><q>“' + esc(r.text) + '”</q><div class="by">' +
+            '<span><b style="color:var(--txt)">' + esc(r.by) + '</b> on ' + esc(r.product) + '</span>' +
+            '<span class="stars">' + stars(r.score) + ' <b class="mono" style="color:var(--amber)">' + r.score.toFixed(1) + '</b></span>' +
+          '</div></div>').join('') + '</div>'
+      : '<div class="empty"><span class="big">📰</span>No reviews yet — ship something and the critics will come.</div>',
+
+    ma: () =>
+      '<div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">' +
+        'Buying a rival removes them from the board, folds their share into yours, and pays a monthly dividend of about 2.2% of their value.</div>' +
+      '<div class="grid2">' +
+        S.rivals.map(r => {
+          if (r.owned) return '<div class="card" style="border-color:rgba(61,220,144,.4)">' +
+            '<div style="display:flex;gap:10px;align-items:center"><span style="font-size:26px">' + r.icon + '</span>' +
+            '<div><b>' + esc(r.name) + '</b><div style="font-size:11.5px;color:var(--green);font-weight:700">✔ Subsidiary · +' + money(Math.round(r.value * .022)) + '/mo</div></div></div></div>';
+          const price = Math.round(r.value * 1.35);
+          const can = S.cash >= price;
+          return '<div class="card">' +
+            '<div style="display:flex;gap:10px;align-items:flex-start">' +
+              '<span style="font-size:26px">' + r.icon + '</span>' +
+              '<div style="flex:1;min-width:0"><b style="font-size:14px">' + esc(r.name) + '</b>' +
+                '<div style="font-size:11px;color:var(--muted)">Focus: ' + CATEGORIES[r.focus].name + '</div>' +
+                '<div class="kv"><span>Market share</span><b>' + r.share.toFixed(1) + '%</b></div>' +
+                '<div class="kv"><span>Strength</span><b>' + r.strength.toFixed(1) + '/10</b></div>' +
+                '<div class="kv"><span>Valuation</span><b class="mono">' + money(r.value) + '</b></div>' +
+                '<button class="btn sm ' + (can ? 'green' : '') + '" style="width:100%;margin-top:9px" data-buy="' + r.id + '"' + (can ? '' : ' disabled') + '>' +
+                  '🤝 Acquire for ' + money(price) + '</button>' +
+              '</div></div></div>';
+        }).join('') +
+      '</div>' +
+      (owned.length ? '<div class="hr"></div><div class="sec-title">Your subsidiaries (' + owned.length + ')</div>' +
+        '<div style="font-size:12.5px;color:var(--muted)">Combined dividends: <b style="color:var(--green)">' +
+        money(owned.reduce((a, r) => a + Math.round(r.value * .022), 0)) + '/month</b></div>' : ''),
+  };
+  function show(t) {
+    $('#mktHost').innerHTML = views[t]();
+    $('#mktHost').onclick = e => {
+      const b = e.target.closest('[data-buy]');
+      if (b && !b.disabled) { acquire(b.dataset.buy); openMarket(); }
+    };
+  }
+  $('#mktTabs').onclick = e => {
+    const b = e.target.closest('[data-t]');
+    if (!b) return;
+    $$('#mktTabs .tab').forEach(x => x.classList.toggle('on', x === b));
+    sfx('click'); show(b.dataset.t);
+  };
+  show('share');
+}
+
+/* ==========================================================================
+   15. SCREEN: PROJECT STATUS  &  LAUNCH
+   ========================================================================== */
+function openProjectStatus() {
+  const p = S.project;
+  if (!p) { openBuild(); return; }
+  ui.screen = 'project';
+  const cat = CATEGORIES[p.cat];
+  const pct = projectPct(p);
+  const eta = Math.max(0, Math.ceil((p.workNeeded - p.workDone) / Math.max(1, dailyWork())));
+  const rp = ratingParts(p);
+  const proj = computeRating(p, true);
+
+  modal({
+    icon: cat.icon, title: p.name + ' — in development', size: 'md',
+    sub: cat.name + ' · started ' + Math.round((S.day - p.startDay)) + ' days ago',
+    body:
+      '<div class="card" style="margin-bottom:16px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">' +
+          '<b style="color:var(--amber);letter-spacing:.14em;font-size:12px">' + projectPhase(p) + '</b>' +
+          '<b class="mono" style="font-size:17px">' + Math.round(pct * 100) + '%</b></div>' +
+        '<div class="bar"><i style="width:' + (pct * 100) + '%"></i></div>' +
+        '<div style="display:flex;justify-content:space-between;margin-top:9px;font-size:11.5px;color:var(--muted)">' +
+          '<span>~' + eta + ' days to ship</span><span>' + Math.round(dailyWork()) + ' work/day from ' + S.employees.length + ' staff + you</span></div>' +
+      '</div>' +
+      '<div class="grid2">' +
+        '<div class="card soft"><div class="sec-title">Quality so far</div>' +
+          '<div class="kv"><span>Spec design ✎</span><b>' + p.specDesign + '</b></div>' +
+          '<div class="kv"><span>Team design ✎</span><b style="color:var(--purple)">+' + Math.round(rp.tD) + '</b></div>' +
+          '<div class="kv"><span>Spec tech ⚡</span><b>' + p.specTech + '</b></div>' +
+          '<div class="kv"><span>Team tech ⚡</span><b style="color:var(--cyan)">+' + Math.round(rp.tT) + '</b></div>' +
+          '<div class="kv"><span>Bugs 🐞</span><b style="color:' + (p.bugs > 15 ? 'var(--red)' : 'var(--muted)') + '">' + Math.round(p.bugs) + '</b></div>' +
+          '<div class="kv"><span>Score vs market</span><b>' + Math.round(rp.total) + ' / ' + Math.round(rp.exp) + '</b></div>' +
+        '</div>' +
+        '<div class="card soft"><div class="sec-title">Projection</div>' +
+          '<div style="text-align:center;padding:6px 0">' +
+            '<div class="mono" style="font-size:38px;font-weight:900;color:var(--amber);line-height:1">' + proj.toFixed(1) + '</div>' +
+            '<div style="font-size:11px;color:var(--muted)">projected rating at this pace</div></div>' +
+          '<div class="kv"><span>Retail price</span><b>$' + p.price + '</b></div>' +
+          '<div class="kv"><span>Unit cost</span><b>$' + p.unit + '</b></div>' +
+          '<div class="kv"><span>Sunk cost</span><b>' + money(p.cost) + '</b></div>' +
+        '</div>' +
+      '</div>' +
+      (p.bugs > 15 ? '<div class="card" style="margin-top:14px;border-color:rgba(255,93,108,.45)">' +
+        '<b style="color:var(--red)">🐞 The build is buggy.</b><div style="font-size:12px;color:var(--muted);margin-top:4px">' +
+        'You are understaffed for a project this size. Hire engineers or expect a rough launch.</div></div>' : ''),
+    foot:
+      '<button class="btn ghost" data-act="close">Back to office</button>' +
+      '<div style="flex:1"></div>' +
+      '<button class="btn red" data-act="cancel">🗑️ Cancel project</button>' +
+      (pct >= 1 ? '<button class="btn primary" data-act="ship">🚀 Ship it</button>'
+                : '<button class="btn cyan" data-act="crunch">☕ Crunch week — ' + money(crunchCost()) + '</button>'),
+  });
+  root.querySelector('.mfoot').onclick = e => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const a = b.dataset.act;
+    if (a === 'close') { closeModal(); }
+    else if (a === 'cancel') {
+      if (!confirm('Cancel "' + p.name + '"? The ' + money(p.cost) + ' you invested is gone.')) return;
+      S.project = null; toast('bad', '🗑️ Project cancelled', 'Sunk cost written off.');
+      closeModal(); queueSave(); render();
+    } else if (a === 'crunch') {
+      const cost = crunchCost();
+      if (S.cash < cost) return toast('bad', '💸 Cannot fund crunch', 'You need ' + money(cost));
+      spend(cost, 'crunch');
+      const cr = teamRates();
+      p.workDone = Math.min(p.workNeeded, p.workDone + dailyWork() * 7);
+      p.teamDesign += cr.d * 3;
+      p.teamTech += cr.t * 3;
+      S.employees.forEach(x => x.energy = clamp(x.energy - 22, 0, 100));
+      toast('info', '☕ Crunch week', 'A week of progress bought with money and morale.');
+      sfx('start');
+      openProjectStatus(); renderHUD(); queueSave();
+    } else if (a === 'ship') {
+      openLaunch();
+    }
+  };
+}
+function dailyWork() {
+  const tb = teamBonus();
+  let work = 3.2;
+  for (const e of S.employees) work += empOutput(e) * tb * (e.role === 'ops' ? .75 : e.role === 'marketer' ? .35 : 1);
+  if (S.officeLevel >= 2) work *= 1.08;
+  return work;
+}
+function crunchCost() { return Math.round(2500 + payroll() * .4); }
+
+function openLaunch() {
+  const p = S.project;
+  if (!p) return;
+  ui.screen = 'launch';
+  S.speed = 0;
+  const maxSpend = Math.max(0, Math.floor(S.cash));
+  const sugg = Math.min(maxSpend, Math.round(p.cost * .45));
+  modal({
+    icon: '🚀', title: 'Launch "' + p.name + '"', size: 'md',
+    sub: 'Choose the marketing push. More money, more first-week noise.',
+    body:
+      '<div class="card" style="text-align:center;margin-bottom:16px">' +
+        '<div style="font-size:42px">' + CATEGORIES[p.cat].icon + '</div>' +
+        '<b style="font-size:19px">' + esc(p.name) + '</b>' +
+        '<div style="font-size:12px;color:var(--muted);margin-top:3px">' + CATEGORIES[p.cat].name + ' · $' + p.price + ' retail · ' + Math.round(p.workNeeded / 9) + ' days of work</div>' +
+      '</div>' +
+      '<div class="card">' +
+        '<div class="sec-title">Launch marketing budget</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">' +
+          '<span style="font-size:12px;color:var(--muted)">Spend</span>' +
+          '<b class="mono" id="mkVal" style="font-size:22px;color:var(--amber)">' + money(sugg) + '</b></div>' +
+        '<input type="range" class="slider" id="mkSlider" min="0" max="' + Math.max(1, maxSpend) + '" value="' + sugg + '">' +
+        '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px">' +
+          '<span>$0 (word of mouth)</span><span>' + money(maxSpend) + ' (all in)</span></div>' +
+        '<div id="mkNote" style="margin-top:12px;font-size:12.5px;color:var(--muted)"></div>' +
+      '</div>',
+    foot: '<button class="btn ghost" data-act="wait">Not yet</button><div style="flex:1"></div>' +
+          '<button class="btn primary" data-act="go">🚀 Launch now</button>',
+  });
+  const slider = $('#mkSlider');
+  const note = () => {
+    const v = +slider.value;
+    $('#mkVal').textContent = money(v);
+    const h = clamp(Math.sqrt(v / 9000) * .18, 0, 2.2);
+    $('#mkNote').innerHTML = 'Expected hype gain <b style="color:var(--amber)">+' + Math.round(h * 100) + '%</b> → sales multiplier ' +
+      '<b style="color:var(--green)">×' + (1 + clamp(S.hype + h, 0, 4) * .7).toFixed(2) + '</b>' +
+      '<br>Cash after launch: <b class="mono">' + money(S.cash - v) + '</b>';
+  };
+  slider.oninput = note; note();
+  root.querySelector('.mfoot').onclick = e => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    if (b.dataset.act === 'wait') { closeModal(); return; }
+    const res = launchProject(+slider.value);
+    showLaunchResult(res);
+  };
+}
+
+function showLaunchResult(res) {
+  const { prod, rating, fanGain } = res;
+  const verdict = rating >= 9 ? ['LEGENDARY', 'var(--amber)', 'The whole industry just stopped to look.']
+    : rating >= 7.5 ? ['ACCLAIMED', 'var(--green)', 'Critics love it. Pre-orders are stacking up.']
+    : rating >= 6 ? ['SOLID', 'var(--cyan)', 'A good release that will pay the bills.']
+    : rating >= 4 ? ['MIXED', 'var(--amber)', 'Some like it. Most shrug.']
+    : ['FLOP', 'var(--red)', 'Ouch. Learn from this one.'];
+  if (rating >= 7.5) { confetti(140); sfx('done'); } else sfx(rating >= 5 ? 'click' : 'bad');
+  ui.screen = 'result';
+  modal({
+    icon: '🎉', title: prod.name + ' is live!', size: 'sm',
+    sub: 'Day one is in the books.',
+    body:
+      '<div class="launch-hero">' +
+        '<div class="launch-score">' + rating.toFixed(1) + '</div>' +
+        '<div class="stars" style="font-size:22px;letter-spacing:3px">' + stars(rating) + '</div>' +
+        '<div style="margin-top:10px;font-weight:900;letter-spacing:.2em;color:' + verdict[1] + '">' + verdict[0] + '</div>' +
+        '<div style="font-size:12.5px;color:var(--muted);margin-top:6px">' + verdict[2] + '</div>' +
+      '</div>' +
+      '<div class="hr"></div>' +
+      '<div class="kv"><span>New fans</span><b style="color:var(--pink)">+' + num(fanGain) + '</b></div>' +
+      '<div class="kv"><span>Hype level</span><b style="color:var(--amber)">' + Math.round(S.hype * 100) + '%</b></div>' +
+      '<div class="kv"><span>Retail price</span><b>$' + prod.price + '</b></div>' +
+      '<div class="kv"><span>Invested</span><b class="mono">' + money(prod.devCost + prod.marketing) + '</b></div>' +
+      '<div class="hr"></div>' +
+      '<div class="sec-title">First reviews</div>' +
+      S.reviews.slice(0, 3).map(r => '<div class="review" style="margin-bottom:8px"><q>“' + esc(r.text) + '”</q>' +
+        '<div class="by"><span>' + esc(r.by) + '</span><b class="mono" style="color:var(--amber)">' + r.score.toFixed(1) + '</b></div></div>').join(''),
+    foot: '<button class="btn primary wide" data-act="ok">Back to the office</button>',
+  });
+  root.querySelector('.mfoot').onclick = () => { closeModal(); S.speed = 1; render(); };
+}
+
+/* ==========================================================================
+   16. SCREEN: OFFICE UPGRADE
+   ========================================================================== */
+function openOffice() {
+  ui.screen = 'office';
+  const cur = office();
+  const next = OFFICES[S.officeLevel + 1];
+  modal({
+    icon: '🏢', title: 'Your Office', size: 'md',
+    sub: 'Bigger floor, more desks, better perks.',
+    body:
+      '<div class="card" style="margin-bottom:16px">' +
+        '<div style="display:flex;gap:12px;align-items:center">' +
+          '<div class="prod-ico" style="font-size:28px">🏢</div>' +
+          '<div><b style="font-size:17px">' + cur.name + '</b>' +
+            '<div style="font-size:12px;color:var(--muted)">Level ' + (S.officeLevel + 1) + ' of ' + OFFICES.length + ' · ' + cur.w + '×' + cur.h + ' floor</div></div>' +
+          '<div style="margin-left:auto;text-align:right">' +
+            '<div class="mono" style="font-size:20px;font-weight:800">' + S.employees.length + '/' + cur.desks + '</div>' +
+            '<div style="font-size:11px;color:var(--muted)">desks used</div></div>' +
+        '</div>' +
+        '<div style="font-size:12.5px;color:var(--muted);margin-top:10px">' + esc(cur.perk) + '</div>' +
+        '<div class="kv" style="margin-top:8px"><span>Monthly rent</span><b class="mono">' + money(Math.round(2200 * Math.pow(2.35, S.officeLevel))) + '</b></div>' +
+      '</div>' +
+      (next
+        ? '<div class="card" style="border-color:rgba(255,176,32,.4)">' +
+            '<div class="sec-title">Next: ' + esc(next.name) + '</div>' +
+            '<div class="grid2">' +
+              '<div><div class="kv"><span>Desks</span><b style="color:var(--green)">' + cur.desks + ' → ' + next.desks + '</b></div>' +
+              '<div class="kv"><span>Floor</span><b>' + next.w + '×' + next.h + '</b></div>' +
+              '<div class="kv"><span>New rent</span><b class="mono">' + money(Math.round(2200 * Math.pow(2.35, S.officeLevel + 1))) + '/mo</b></div></div>' +
+              '<div style="font-size:12.5px;color:var(--muted);display:flex;align-items:center">✨ ' + esc(next.perk) + '</div>' +
+            '</div>' +
+            '<button class="btn primary wide" style="margin-top:12px" id="upBtn"' + (S.cash >= next.cost ? '' : ' disabled') + '>' +
+              '🏗️ Move in — ' + money(next.cost) + '</button>' +
+            (S.cash >= next.cost ? '' : '<div style="text-align:center;font-size:11.5px;color:var(--red);margin-top:7px">You need ' + money(next.cost - S.cash) + ' more</div>') +
+          '</div>'
+        : '<div class="card" style="text-align:center"><div style="font-size:34px">🏆</div><b>Top of the world.</b>' +
+          '<div style="font-size:12.5px;color:var(--muted);margin-top:4px">There is no bigger office to buy.</div></div>') +
+      '<div class="hr"></div>' +
+      '<div class="sec-title">All locations</div>' +
+      '<div style="display:flex;flex-direction:column;gap:7px">' +
+        OFFICES.map((o2, i) =>
+          '<div class="emp-row" style="opacity:' + (i <= S.officeLevel ? 1 : .55) + '">' +
+            '<span style="font-size:20px">' + (i < S.officeLevel ? '✔️' : i === S.officeLevel ? '📍' : '🔒') + '</span>' +
+            '<div style="flex:1"><b style="font-size:13px">' + o2.name + '</b>' +
+              '<div style="font-size:11px;color:var(--muted)">' + o2.desks + ' desks · ' + esc(o2.perk) + '</div></div>' +
+            '<b class="mono" style="font-size:12px;color:var(--amber)">' + (o2.cost ? money(o2.cost) : 'free') + '</b>' +
+          '</div>').join('') +
+      '</div>',
+  });
+  const up = $('#upBtn');
+  if (up) up.onclick = () => { upgradeOffice(); openOffice(); };
+}
+
+/* ==========================================================================
+   17. SCREEN: INTRO / GAME OVER / SETTINGS
+   ========================================================================== */
+function openIntro() {
+  ui.screen = 'intro';
+  modal({
+    icon: '🚀', title: 'Startup Empire Tycoon', size: 'sm',
+    sub: 'From a garage desk to a global empire.',
+    body:
+      '<div style="text-align:center;font-size:54px;line-height:1;margin:4px 0 14px">🏢</div>' +
+      '<div style="font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:16px">' +
+        'Name your company, design products component by component, hire the people who make them great, ' +
+        'buy hype, read the reviews, and swallow your rivals whole.</div>' +
+      '<div class="sec-title">Company name</div>' +
+      '<input class="inp" id="coName" maxlength="22" value="' + esc(pick(['Nova Labs', 'Orbit Works', 'Pixel Forge', 'Bitwise Co.', 'Lumen Studio', 'Vertex Labs'])) + '">' +
+      '<div class="grid2" style="margin-top:16px">' +
+        '<div class="card soft"><div class="sec-title">Starting cash</div><b class="mono" style="font-size:18px;color:var(--green)">$60,000</b></div>' +
+        '<div class="card soft"><div class="sec-title">Starting office</div><b style="font-size:15px">🏚️ Garage · 4 desks</b></div>' +
+      '</div>' +
+      '<div style="font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.55">' +
+        '💡 <b>Tip:</b> hire at least one designer and one engineer before greenlighting anything — solo projects ship badly. ' +
+        'Your game saves itself to this browser automatically.</div>',
+    foot: '<button class="btn primary wide" data-act="start">Found the company →</button>',
+  });
+  $('#coName').addEventListener('keydown', e => { if (e.key === 'Enter') root.querySelector('[data-act="start"]').click(); });
+  root.querySelector('.mfoot').onclick = () => {
+    S.company = ($('#coName').value || 'Nova Labs').trim().slice(0, 22) || 'Nova Labs';
+    refreshCandidates(6);
+    buildOfficeLayout();
+    cam = { x: 0, y: 0, zoom: fitZoom() };
+    closeModal();
+    S.speed = 1;
+    sfx('start');
+    toast('good', '🎉 ' + S.company + ' is born', 'Start by hiring someone, then design a product.');
+    queueSave();
+    render();
+  };
+}
+
+function gameOverScreen() {
+  ui.screen = 'gameover';
+  modal({
+    icon: '💀', title: 'Bankrupt', size: 'sm',
+    sub: 'The bank called. Then the landlord.',
+    body:
+      '<div style="text-align:center;padding:10px 0">' +
+        '<div style="font-size:54px">📉</div>' +
+        '<div style="font-size:14px;color:var(--muted);margin-top:8px;line-height:1.6">' +
+          esc(S.company) + ' ran out of money on ' + fullDate() + '.</div></div>' +
+      '<div class="hr"></div>' +
+      '<div class="kv"><span>Products shipped</span><b>' + S.stats.launches + '</b></div>' +
+      '<div class="kv"><span>Lifetime revenue</span><b class="mono" style="color:var(--green)">' + money(S.stats.revenue) + '</b></div>' +
+      '<div class="kv"><span>Units sold</span><b>' + num(S.stats.units) + '</b></div>' +
+      '<div class="kv"><span>Best rating</span><b style="color:var(--amber)">' + (S.stats.best ? S.stats.best.toFixed(1) : '—') + '</b></div>' +
+      '<div class="kv"><span>People hired</span><b>' + S.stats.hires + '</b></div>',
+    foot: '<button class="btn primary wide" data-act="again">Start over</button>',
+  });
+  root.querySelector('.mfoot').onclick = () => { hardReset(); };
+}
+function hardReset() {
+  wipeSave();
+  S = freshState();
+  buildOfficeLayout();
+  particles = [];
+  closeModal();
+  openIntro();
+  render();
+}
+function openSettings() {
+  ui.screen = 'settings';
+  modal({
+    icon: '⚙️', title: 'Settings', size: 'sm', sub: 'Save data lives in this browser only.',
+    body:
+      '<div class="kv"><span>Company</span><b>' + esc(S.company) + '</b></div>' +
+      '<div class="kv"><span>In-game date</span><b>' + fullDate() + '</b></div>' +
+      '<div class="kv"><span>Days played</span><b>' + S.day + '</b></div>' +
+      '<div class="hr"></div>' +
+      '<div style="display:flex;flex-direction:column;gap:9px">' +
+        '<button class="btn" data-act="save">💾 Save now</button>' +
+        '<button class="btn" data-act="export">📋 Copy save to clipboard</button>' +
+        '<button class="btn red" data-act="reset">🗑️ Delete save &amp; restart</button>' +
+      '</div>' +
+      '<div style="font-size:11.5px;color:var(--muted);margin-top:14px">Shortcuts: <b>Space</b> pause · <b>1/2/3</b> speed · <b>Esc</b> close</div>',
+  });
+  $('.mbody').onclick = e => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    if (b.dataset.act === 'save') { save(); toast('good', '💾 Saved', 'Progress stored in this browser.'); }
+    else if (b.dataset.act === 'export') {
+      try { navigator.clipboard.writeText(JSON.stringify(S)); toast('good', '📋 Copied', 'Save JSON is on your clipboard.'); }
+      catch (err) { toast('bad', 'Clipboard blocked', 'Your browser refused the copy.'); }
+    } else if (b.dataset.act === 'reset') {
+      if (confirm('Delete your save and start a brand new company?')) hardReset();
+    }
+  };
+}
+
+/* ==========================================================================
+   18. ROUTER + INPUT
+   ========================================================================== */
+function openScreen(name) {
+  const map = {
+    build: openBuild, employees: openEmployees, marketing: openMarketing,
+    products: openProducts, market: openMarket, office: openOffice,
+    project: openProjectStatus, launch: openLaunch, intro: openIntro,
+    gameover: gameOverScreen, settings: openSettings,
+  };
+  (map[name] || openBuild)();
+}
+function render() { renderHUD(); }
+
+$('#sideMenu').addEventListener('click', e => {
+  const b = e.target.closest('[data-screen]');
+  if (!b) return;
+  sfx('click');
+  openScreen(b.dataset.screen);
+});
+$('#projCard').onclick = () => { sfx('click'); S.project ? openProjectStatus() : openBuild(); };
+$('#officeChip').onclick = () => { sfx('click'); openOffice(); };
+$('#hypeChip').onclick = () => { sfx('click'); openMarketing(); };
+$('#speedCtl').addEventListener('click', e => {
+  const b = e.target.closest('[data-speed]');
+  if (!b) return;
+  S.speed = +b.dataset.speed;
+  sfx('click');
+  renderHUD();
+  queueSave();
+});
+$('.brand').addEventListener('click', () => { sfx('click'); openSettings(); });
+$('.brand').style.cursor = 'pointer';
+
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'Escape') { if (root.classList.contains('on')) closeModal(); return; }
+  if (e.code === 'Space') { e.preventDefault(); S.speed = S.speed > 0 ? 0 : 1; renderHUD(); return; }
+  const speeds = { '1': 1, '2': 2, '3': 4 };
+  if (speeds[e.key]) { S.speed = speeds[e.key]; renderHUD(); return; }
+  const screens = { 'n': 'build', 'e': 'employees', 'm': 'marketing', 'p': 'products', 'r': 'market', 'o': 'office' };
+  if (screens[e.key]) { sfx('click'); openScreen(screens[e.key]); }
+});
+window.addEventListener('beforeunload', save);
+document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+
+/* daily sale sparkles in the office */
+let lastRevTick = 0;
+setInterval(() => {
+  if (!S || S.speed === 0) return;
+  const recent = S.revenueLog.slice(-3).reduce((a, b) => a + b, 0);
+  if (recent > 0 && Date.now() - lastRevTick > 1400) {
+    lastRevTick = Date.now();
+    spawnParticle('+' + money(recent / 3), '#3ddc90');
+  }
+}, 900);
+
+/* ==========================================================================
+   19. BOOT
+   ========================================================================== */
+function boot() {
+  const loaded = load();
+  S = loaded || freshState();
+  if (!S.candidates || !S.candidates.length) refreshCandidates(6);
+  resizeCanvas();
+  buildOfficeLayout();
+  cam = { x: 0, y: 0, zoom: fitZoom() };
+  render();
+  requestAnimationFrame(frame);
+  if (!loaded) {
+    S.speed = 0;
+    openIntro();
+  } else {
+    toast('info', '💾 Welcome back', esc(S.company) + ' · ' + fullDate());
+    S.speed = S.speed || 1;
+  }
+  window.addEventListener('resize', () => { cam.zoom = clamp(cam.zoom, .45, 2.4); });
+}
+boot();
+</script>
+</body>
+</html>
